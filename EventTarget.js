@@ -38,7 +38,7 @@ class EventTarget
 	{
 		if(!this.listeners.has(event.type))
 		{
-			return;
+			return event;
 		}
 
 		const listeners = this.listeners.get(event.type);

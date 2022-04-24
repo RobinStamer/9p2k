@@ -4,12 +4,12 @@ class Event
 {
 	[override] = undefined;
 
-	constructor(eventType, {cancellable = false, bubbles = false, detail = null})
+	constructor(eventType, {cancelable = false, bubbles = false, detail = null})
 	{
 		Object.defineProperties(this, {
 			propagationStopped: {value: 0, writable:true, configurable:true, enumerable: true}
 			, defaultPrevented: {value: 0, writable:true, configurable:true, enumerable: true}
-			, cancellable:      {value: cancellable, enumerable: true}
+			, cancelable:       {value: cancelable, enumerable: true}
 			, bubbles:          {value: bubbles, enumerable: true}
 			, detail:           {value: detail, enumerable: true}
 			, type:             {value: eventType, enumerable: true}

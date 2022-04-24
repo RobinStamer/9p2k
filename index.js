@@ -26,20 +26,39 @@ const server = net.createServer(c => {
 
 server.listen(564, () => console.log(`Listening!`));
 
+// MessageService.target.addEventListener('read', event => {
+// 	process.stderr.write(`\n\u001b[35m Read event on ${event.detail.file} \u001b[39m\n`);
+// 	// event.override(`Content overridden on read!\n`);
+// 	// event.preventDefault();
+// });
+
+// MessageService.target.addEventListener('write', event => {
+// 	process.stderr.write(`\n\u001b[35m Write event on ${event.detail.file} \u001b[39m\n`);
+// 	// event.override(`Content overridden on write!\n`);
+// 	// 	event.preventDefault();
+// });
+
+// MessageService.target.addEventListener('list', event => {
+// 	process.stderr.write(`\n\u001b[35m List event on ${event.detail.file} \u001b[39m\n`);
+// 	// event.override(['File-X', 'File-Y', 'File-Z']);
+// 	// event.preventDefault();
+// });
+
 MessageService.target.addEventListener('read', event => {
-	process.stderr.write(`\n\u001b[35m Read event on ${event.detail.file} \u001b[39m\n`);
-	// event.override(`Content overridden on read!\n`);
-	// event.preventDefault();
+	if(!event.detail.offset)
+	{
+		process.stderr.write(`\u001b[35m(event hooked!)\u001b[39m `);
+	}
+
+	event.override(`This is override content for ${event.detail.file}\n`);
+	event.preventDefault();
 });
 
-MessageService.target.addEventListener('write', event => {
-	process.stderr.write(`\n\u001b[35m Write event on ${event.detail.file} \u001b[39m\n`);
-	// event.override(`Content overridden on write!\n`);
-	// 	event.preventDefault();
-});
+MessageService.target.addEventListener('walk', event => {
+	process.stderr.write(`\u001b[35m(event hooked!)\u001b[39m `);
 
-MessageService.target.addEventListener('list', event => {
-	process.stderr.write(`\n\u001b[35m List event on ${event.detail.file} \u001b[39m\n`);
-	// event.override(['File-X', 'File-Y', 'File-Z']);
-	// event.preventDefault();
+	if(String(event.detail.file).match(/X$/))
+	{
+		event.override(true);
+	}
 });
