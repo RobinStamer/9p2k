@@ -32,35 +32,6 @@ files.map(f => {
 	const file = FileService.getByPath(f);
 });
 
-const messageEvents = new EventTarget;
-
-messageEvents.addEventListener('read', event => {
-	if(Math.random() > 0.75)
-	{
-		event.override(`Content overridden on read!\n`);
-	}
-	else if(Math.random() > 0.5)
-	{
-		// event.preventDefault();
-	}
-});
-
-messageEvents.addEventListener('write', event => {
-	event.override(`Content overridden on write!\n`);
-	if(Math.random() > 0.75)
-	{
-	}
-	// else if(Math.random() > 0.5)
-	// {
-	// 	event.preventDefault();
-	// }
-});
-
-messageEvents.addEventListener('list', event => {
-	event.override(['File-X', 'File-Y', 'File-Z']);
-	// event.preventDefault();
-});
-
 class Message
 {
 	blob;
@@ -102,21 +73,6 @@ class Message
 	}
 }
 
-class TMessage extends Message
-{
-	tag;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.tag   = dataView.getUint16(5, true);
-
-		return instance;
-	}
-}
-
 class RMessage extends Message
 {
 	tag;
@@ -132,8 +88,49 @@ class RMessage extends Message
 	}
 }
 
+class TMessage extends Message
+{
+	static responseType = RMessage;
+
+	tag;
+
+	static parse(blob)
+	{
+		const instance = super.parse(blob);
+		const dataView = instance.view;
+
+		instance.tag   = dataView.getUint16(5, true);
+
+		return instance;
+	}
+
+	response()
+	{
+		return this.constructor.responseType.encode(this);
+	}
+}
+
+class RVersionMessage extends RMessage
+{
+	msize;
+	version;
+
+	static parse(blob)
+	{
+		const instance = super.parse(blob);
+		const dataView = instance.view;
+
+		instance.msize   = dataView.getUint32(7, true);
+		instance.version = blob.slice(11);
+
+		return instance;
+	}
+}
+
 class TVersionMessage extends TMessage
 {
+	static responseType = RVersionMessage;
+
 	msize;
 	version;
 
@@ -158,51 +155,6 @@ class TVersionMessage extends TMessage
 		dataView.setUint8(4, packets.R_VERSION, true);
 
 		return RVersionMessage.parse(blob);
-	}
-}
-
-class RVersionMessage extends RMessage
-{
-	msize;
-	version;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.msize   = dataView.getUint32(7, true);
-		instance.version = blob.slice(11);
-
-		return instance;
-	}
-}
-
-class TAttachMessage extends TMessage
-{
-	fid;
-	afid;
-	aName;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.fid   = dataView.getUint32(7, true);
-		instance.afid  = dataView.getUint32(11, true);
-
-		instance.uName = String( NString.decode(blob, 15) );
-		instance.aName = String( NString.decode(blob, 17 + instance.uName.length) );
-
-		return instance;
-	}
-
-	response()
-	{
-		const response = RAttachMessage.encode(this);
-
-		return response;
 	}
 }
 
@@ -239,23 +191,26 @@ class RAttachMessage extends RMessage
 	}
 }
 
-class TStatMessage extends TMessage
+class TAttachMessage extends TMessage
 {
+	static responseType = RAttachMessage;
+
+	fid;
+	afid;
+	aName;
+
 	static parse(blob)
 	{
 		const instance = super.parse(blob);
 		const dataView = instance.view;
 
 		instance.fid   = dataView.getUint32(7, true);
+		instance.afid  = dataView.getUint32(11, true);
+
+		instance.uName = String( NString.decode(blob, 15) );
+		instance.aName = String( NString.decode(blob, 17 + instance.uName.length) );
 
 		return instance;
-	}
-
-	response()
-	{
-		const response = RStatMessage.encode(this);
-
-		return response;
 	}
 }
 
@@ -304,8 +259,10 @@ class RStatMessage extends RMessage
 	}
 }
 
-class TGetAttrMessage extends TMessage
+class TStatMessage extends TMessage
 {
+	static responseType = RStatMessage;
+
 	static parse(blob)
 	{
 		const instance = super.parse(blob);
@@ -314,13 +271,6 @@ class TGetAttrMessage extends TMessage
 		instance.fid   = dataView.getUint32(7, true);
 
 		return instance;
-	}
-
-	response()
-	{
-		const response = RGetAttrMessage.encode(this);
-
-		return response;
 	}
 }
 
@@ -366,6 +316,28 @@ class RGetAttrMessage extends RMessage
 		instance.tag  = message.tag;
 
 		return instance;
+	}
+}
+
+class TGetAttrMessage extends TMessage
+{
+	static responseType = RGetAttrMessage;
+
+	static parse(blob)
+	{
+		const instance = super.parse(blob);
+		const dataView = instance.view;
+
+		instance.fid   = dataView.getUint32(7, true);
+
+		return instance;
+	}
+
+	response()
+	{
+		const response = RGetAttrMessage.encode(this);
+
+		return response;
 	}
 }
 
@@ -526,7 +498,6 @@ class TlOpenMessage extends TMessage
 
 	response()
 	{
-
 		const file = FileService.getByFid(this.fid);
 
 		if(file)
@@ -615,16 +586,16 @@ class RReadDirMessage extends RMessage
 				, fid:    tMessage.fid
 			}});
 
-			process.stderr.write(`\u001b[34m LIST: ${tMessage.tag} ${tMessage.fid} ${parent.path}\u001b[39m\n`);
+			process.stderr.write(`\u001b[34m LIST: ${tMessage.tag} ${tMessage.fid} ${parent.path}\u001b[39m `);
 
-			if(!messageEvents.dispatchEvent(listEvent))
+			if(!MessageService.target.dispatchEvent(listEvent))
 			{
-				process.stderr.write(`\u001b[31m STOP: ${tMessage.tag} ${tMessage.fid} ${parent.path}\u001b[39m\n`);
+				process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
 
 				return RlErrorMessage.encode(tMessage);
 			}
 
-			process.stderr.write(`\u001b[32m   GO: ${tMessage.tag} ${tMessage.fid} ${parent.path}\u001b[39m\n`);
+			process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
 
 			for(const path of listEvent.getOverride(paths))
 			{
@@ -803,16 +774,16 @@ class RReadMessage extends RMessage
 			, fid:    tMessage.fid
 		}});
 
-		process.stderr.write(`\u001b[36m READ: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m\n`);
+		process.stderr.write(`\u001b[36m READ: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m `);
 
-		if(!messageEvents.dispatchEvent(readEvent))
+		if(!MessageService.target.dispatchEvent(readEvent))
 		{
-			process.stderr.write(`\u001b[31m STOP: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m\n`);
+			process.stderr.write(`[ \u001b[31m STOP\u001b[39m ]\n`);
 
 			return RlErrorMessage.encode(tMessage);
 		}
 
-		process.stderr.write(`\u001b[32m   GO: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m\n`);
+		process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
 
 		const rMessage   = new this.prototype.constructor;
 
@@ -877,18 +848,20 @@ class RWriteMessage extends RMessage
 
 		if(!tMessage.offset)
 		{
-			process.stderr.write(`\u001b[33mWRITE: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m\n`);
+			process.stderr.write(`\u001b[33mWRITE: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m `);
 		}
 
-		if(!messageEvents.dispatchEvent(writeEvent))
+		if(!MessageService.target.dispatchEvent(writeEvent))
 		{
 			if(!tMessage.offset)
 			{
-				process.stderr.write(`\u001b[31m STOP: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m\n`);
+				process.stderr.write(`[ \u001b[31m STOP\u001b[39m ]\n`);
 			}
 
 			return RlErrorMessage.encode(tMessage);
 		}
+
+		process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
 
 		const bytes = [
 			0, 0, 0, 0,
@@ -984,8 +957,10 @@ class RlErrorMessage extends RMessage
 	}
 }
 
-class MessageFactory
+class MessageService
 {
+	static target = new EventTarget;
+
 	static parse(blob)
 	{
 		let index = 0;
@@ -1124,4 +1099,4 @@ class MessageFactory
 	}
 }
 
-module.exports = { MessageFactory, TFlushMessage };
+module.exports = { MessageService, TFlushMessage };
