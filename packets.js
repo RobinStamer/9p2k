@@ -46,6 +46,9 @@ module.exports = {
 	T_GETATTR: 24,
 	R_GETATTR: 25,
 
+	T_SETATTR: 26,
+	R_SETATTR: 27,
+
 	T_READDIR: 40,
 	R_READDIR: 41,
 

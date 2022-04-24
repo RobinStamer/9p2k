@@ -5,6 +5,7 @@ class File
 	deleted   = false;
 	parent    = null;
 	directory = false;
+	content   = undefined;
 
 	fullPath()
 	{

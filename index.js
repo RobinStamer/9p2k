@@ -2,6 +2,8 @@ const net      = require('net');
 const packets  = require('./packets');
 const Messages = require('./Message');
 
+process.stderr.write("\n");
+
 const server = net.createServer(c => {
 	c.on('end', () => console.log('server disconnected!'));
 	c.on('data', blob => {
@@ -15,10 +17,7 @@ const server = net.createServer(c => {
 
 			const response = message.response();
 
-			if(response)
-			{
-				c.write(response.blob);
-			}
+			c.write(response.blob);
 		}
 	});
 });
