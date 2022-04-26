@@ -1,3 +1,4 @@
+const Directory = require('./Directory').Directory;
 const File = require('./File').File;
 const Qid  = require('./Qid').Qid;
 
@@ -8,10 +9,10 @@ class FileService
 
 	static assignFid(fid, file)
 	{
-		// if(this.byFid.has(fid))
-		// {
-		// 	throw new Error(`FID ${fid} already assigned!`);
-		// }
+		if(this.byFid.has(fid))
+		{
+			throw new Error(`FID ${fid} already assigned!`);
+		}
 
 		this.byFid.set(fid, file);
 	}
@@ -43,15 +44,41 @@ class FileService
 			return this.byPath.get(path);
 		}
 
-		const file = new File;
+		const file = new (directory ? Directory : File)({path});
 
 		file.directory = file.directory || directory;
-		file.path = path;
 		file.qid  = Qid.for(this.byPath.size, directory);
 
 		this.byPath.set(path, file);
 
 		return file;
+	}
+
+	static register(...files)
+	{
+		for(const file of files)
+		{
+			const parent = file.parent;
+
+			const path = (parent && parent.path !== '/')
+				? '/' + parent.fullPath() + '/' + file.name
+				: '/' + file.name;
+
+			if(this.byPath.has(path))
+			{
+				throw new Error(`Path "${path}" already registered!`);
+			}
+
+			this.byPath.set(path, file);
+
+			if(file instanceof Directory)
+			{
+				for(const subFile of file.getChildren())
+				{
+					this.register(subFile);
+				}
+			}
+		}
 	}
 }
 

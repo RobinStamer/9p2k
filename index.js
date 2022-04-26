@@ -1,64 +1,54 @@
 const MessageService = require('./Message').MessageService;
-const net = require('net');
+
+const FileService = require('./FileService').FileService
+const Directory   = require('./Directory').Directory
+const File        = require('./File').File
+const Server      = require('./Server').Server;
 
 process.stderr.write("\n");
 
-const server = net.createServer(c => {
+class TimeFile extends File
+{
+	mode = 0o100555;
 
-	c.on('end', () => console.log('server disconnected!'));
+	getContent()
+	{
+		return String(new Date) + "\n";
+	}
+}
 
-	c.on('data', blob => {
-		const messages = MessageService.parse(blob);
+const childA = new TimeFile({name:'something'});
+const childB = new File({name:'something-else', content: 'LMAO!'});
+const childC = new File({name:'something-different'});
+const childD = new File({name:'something-completely-different'});
 
-		for(const message of messages)
-		{
-			if(!message.response)
-			{
-				continue;
-			}
+const list = new Directory({name:'list-of-stuff'});
+const root = new Directory({path:'/'});
 
-			const response = message.response();
+root.addChildren(childA, childB, list);
+list.addChildren(childC, childD);
 
-			c.write(response.blob);
-		}
-	});
-});
+FileService.register(root);
 
-server.listen(564, () => console.log(`Listening!`));
+Server.listen(564, () => console.log(`Listening!`));
 
-// MessageService.target.addEventListener('read', event => {
-// 	process.stderr.write(`\n\u001b[35m Read event on ${event.detail.file} \u001b[39m\n`);
-// 	// event.override(`Content overridden on read!\n`);
-// 	// event.preventDefault();
-// });
-
-// MessageService.target.addEventListener('write', event => {
-// 	process.stderr.write(`\n\u001b[35m Write event on ${event.detail.file} \u001b[39m\n`);
-// 	// event.override(`Content overridden on write!\n`);
-// 	// 	event.preventDefault();
-// });
-
+// const names = new Set(rootChildren.map(c => c.name));
 // MessageService.target.addEventListener('list', event => {
-// 	process.stderr.write(`\n\u001b[35m List event on ${event.detail.file} \u001b[39m\n`);
-// 	// event.override(['File-X', 'File-Y', 'File-Z']);
-// 	// event.preventDefault();
+// 	if(event.detail.directory !== '/')
+// 	{
+// 		return;
+// 	}
+// 	event.override(rootChildren);
 // });
-
-MessageService.target.addEventListener('read', event => {
-	if(!event.detail.offset)
-	{
-		process.stderr.write(`\u001b[35m(event hooked!)\u001b[39m `);
-	}
-
-	event.override(`This is override content for ${event.detail.file}\n`);
-	event.preventDefault();
-});
-
-MessageService.target.addEventListener('walk', event => {
-	process.stderr.write(`\u001b[35m(event hooked!)\u001b[39m `);
-
-	if(String(event.detail.file).match(/X$/))
-	{
-		event.override(true);
-	}
-});
+// MessageService.target.addEventListener('walk', event => {
+// 	if(event.detail.directory !== '/')
+// 	{
+// 		return;
+// 	}
+// 	if(!names.has(event.detail.file))
+// 	{
+// 		return
+// 	}
+// 	process.stderr.write(`\u001b[35m(event hooked!)\u001b[39m `);
+// 	event.override(true);
+// });
