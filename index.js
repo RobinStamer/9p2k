@@ -1,4 +1,4 @@
-const MessageService = require('./protocol/Message').MessageService;
+const MessageService = require('./protocol/MessageService').MessageService;
 
 const FileService = require('./fs/FileService').FileService
 const Directory   = require('./fs/Directory').Directory
