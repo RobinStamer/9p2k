@@ -36,6 +36,7 @@ module.exports = {
 	R_STAT:    125,
 
 	T_WSTAT:   126,
+	R_WSTAT:   127,
 
 	//9p2000.L
 	R_LERROR:  7,

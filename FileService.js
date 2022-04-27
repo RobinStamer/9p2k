@@ -47,14 +47,14 @@ class FileService
 			return this.byPath.get(path);
 		}
 
-		const file = new (directory ? Directory : File)({path});
+		// const file = new (directory ? Directory : File)({path});
 
-		file.directory = file.directory || directory;
-		file.qid  = Qid.for(this.byPath.size, directory);
+		// file.directory = file.directory || directory;
+		// file.qid  = Qid.for(this.byPath.size, directory);
 
-		this.byPath.set(path, file);
+		// this.byPath.set(path, file);
 
-		return file;
+		// return file;
 	}
 
 	static register(...files)
@@ -63,9 +63,16 @@ class FileService
 		{
 			const parent = file.parent;
 
-			const path = (parent && parent.path !== '/')
-				? '/' + parent.fullPath() + '/' + file.name
-				: '/' + file.name;
+			let path = '/';
+
+			if(parent)
+			{
+				path = (parent.path !== '/')
+					? parent.fullPath() + '/' + file.name
+					: '/' + file.name;
+			}
+
+			// console.log(path, file, parent);
 
 			if(this.byPath.has(path))
 			{
@@ -74,13 +81,13 @@ class FileService
 
 			this.byPath.set(path, file);
 
-			if(file instanceof Directory)
-			{
-				for(const subFile of file.getChildren())
-				{
-					this.register(subFile);
-				}
-			}
+			// if(file instanceof Directory)
+			// {
+			// 	for(const subFile of file.getChildren())
+			// 	{
+			// 		this.register(subFile);
+			// 	}
+			// }
 		}
 	}
 }

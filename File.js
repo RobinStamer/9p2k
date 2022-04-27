@@ -1,16 +1,15 @@
 class File
 {
-	root      = false
-	path      = '';
-	name      = '';
-	size      = 0;
-	mode      = 0o777;
-	uid       = 1000;
-	gid       = 1000;
-	deleted   = false;
-	parent    = null;
-	directory = false;
-	content   = undefined;
+	root    = false
+	path    = '';
+	name    = '';
+	size    = 0;
+	mode    = 0o777;
+	uid     = 1000;
+	gid     = 1000;
+	parent  = null;
+	exists  = true;
+	content = undefined;
 
 	constructor(props = {})
 	{
@@ -31,11 +30,14 @@ class File
 
 	fullPath()
 	{
-		const parentPath = this.parent ? this.parent.fullPath() : '';
+		if(this.parent)
+		{
+			return (this.parent.path !== '/')
+				? this.parent.fullPath() + '/' + this.name
+				: '/' + this.name;
+		}
 
-		return parentPath
-			? (parentPath + '/' + this.name)
-			: this.name;
+		return '/';
 	}
 
 	setContent(content)

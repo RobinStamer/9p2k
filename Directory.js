@@ -2,7 +2,7 @@ const File = require('./File').File;
 
 class Directory extends File
 {
-	mode      = 0o775;
+	mode      = 0o777;
 	directory = true;
 	children  = [];
 
@@ -13,6 +13,11 @@ class Directory extends File
 		for(const prop of Object.getOwnPropertyNames(this))
 		{
 			this[prop] = props[prop] ?? this[prop];
+		}
+
+		if(this.path == '/')
+		{
+			this.name = '/';
 		}
 	}
 
@@ -33,6 +38,15 @@ class Directory extends File
 		children.forEach(c => c.parent = this);
 
 		this.children.push(...children);
+	}
+
+	newFile(name, exists = true)
+	{
+		const file = new File({name,exists,parent:this});
+
+		this.addChildren(file);
+
+		return file;
 	}
 }
 
