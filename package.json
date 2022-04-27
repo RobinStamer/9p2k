@@ -1,11 +1,8 @@
 {
   "name": "nineP2k",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.0",
+  "description": "9P2000 server for Node JS.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC"
+  "author": "Sean Morris",
+  "license": "GPLv3"
 }

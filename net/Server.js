@@ -1,9 +1,15 @@
-const MessageService = require('./Message').MessageService;
+const MessageService = require('../protocol/Message').MessageService;
+
 const net = require('net');
+
 const server = net.createServer(c => {
+
 	c.on('end', () => console.log('server disconnected!'));
+
 	c.on('data', blob => {
+
 		const messages = MessageService.parse(blob);
+
 		for(const message of messages)
 		{
 			if(message.response)
@@ -11,6 +17,7 @@ const server = net.createServer(c => {
 				c.write(message.response().blob);
 			}
 		}
+
 	});
 });
 

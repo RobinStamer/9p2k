@@ -1,6 +1,6 @@
 const Directory = require('./Directory').Directory;
 const File = require('./File').File;
-const Qid  = require('./Qid').Qid;
+const Qid  = require('../session/Qid').Qid;
 
 class FileService
 {

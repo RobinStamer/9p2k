@@ -1,11 +1,14 @@
-const Constants   = require('./Constants');
-const NString     = require('./NString').NString;
-const Qid         = require('./Qid').Qid;
-const QSession    = require('./QSession').QSession;
-const EventTarget = require('./EventTarget').EventTarget;
-const Event       = require('./Event').Event;
-const File        = require('./File').File;
-const FileService = require('./FileService').FileService;
+const Constants   = require('../protocol/Constants');
+const NString     = require('../protocol/NString').NString;
+
+const Qid         = require('../session/Qid').Qid;
+const QSession    = require('../session/QSession').QSession;
+
+const EventTarget = require('../events/EventTarget').EventTarget;
+const Event       = require('../events/Event').Event;
+
+const File        = require('../fs/File').File;
+const FileService = require('../fs/FileService').FileService;
 
 class Message
 {
