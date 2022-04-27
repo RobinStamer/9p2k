@@ -311,6 +311,46 @@ class TStatMessage extends TMessage
 	}
 }
 
+class RWStatMessage extends RMessage
+{
+	static encode(tMessage)
+	{
+		const rMessage = new this.prototype.constructor;
+
+		const bytes = [
+			0, 0, 0, 0,
+			Constants.R_WSTAT,
+			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
+		];
+
+		bytes[0] = bytes.length;
+
+		rMessage.size = bytes[0];
+		rMessage.blob = Buffer.from(new Uint8Array(bytes));
+
+		rMessage.type = Constants.R_WSTAT;
+		rMessage.TYPE = 'R_WSTAT';
+		rMessage.tag  = tMessage.tag;
+
+		return rMessage;
+	}
+}
+
+class TWStatMessage extends TMessage
+{
+	static responseType = RWStatMessage;
+
+	static parse(blob)
+	{
+		const instance = super.parse(blob);
+		const dataView = instance.view;
+
+		instance.fid   = dataView.getUint32(7, true);
+
+		return instance;
+	}
+}
+
 class RGetAttrMessage extends RMessage
 {
 	static encode(message)
@@ -885,9 +925,9 @@ class RReadMessage extends RMessage
 					... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // mtime
 					... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
 					... NString.encode(file.root ? '/' : file.name),                             // Name
-					... NString.encode('sean'),                                                  // uid
-					... NString.encode('sean'),                                                  // gid
-					... NString.encode('sean'),                                                  // muid
+					... NString.encode('1000'),                                                  // uid
+					... NString.encode('1000'),                                                  // gid
+					... NString.encode('1000'),                                                  // muid
 				];
 
 				entries.push(...entry);
@@ -902,15 +942,14 @@ class RReadMessage extends RMessage
 				... entries
 			];
 
-
-			const rMessage   = new this.prototype.constructor;
+			const rMessage = new this.prototype.constructor;
 
 			Object.assign(bytes, new Uint8Array(new Uint32Array([rMessage.size = bytes.length]).buffer));
 
-			rMessage.size    = bytes.length;
-			rMessage.type    = Constants.R_READ;
-			rMessage.TYPE    = 'R_READ';
-			rMessage.tag     = tMessage.tag;
+			rMessage.size = bytes.length;
+			rMessage.type = Constants.R_READ;
+			rMessage.TYPE = 'R_READ';
+			rMessage.tag  = tMessage.tag;
 
 			rMessage.blob = Buffer.from(new Uint8Array(bytes));
 
@@ -1167,6 +1206,14 @@ class MessageService
 
 				case Constants.R_STAT:
 					messages.push( RStatMessage.parse(current) );
+					break;
+
+				case Constants.T_WSTAT:
+					messages.push( TWStatMessage.parse(current) );
+					break;
+
+				case Constants.R_WSTAT:
+					messages.push( RWStatMessage.parse(current) );
 					break;
 
 				case Constants.T_CLUNK:

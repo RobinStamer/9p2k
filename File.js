@@ -4,7 +4,7 @@ class File
 	path      = '';
 	name      = '';
 	size      = 0;
-	mode      = 0o755;
+	mode      = 0o777;
 	uid       = 1000;
 	gid       = 1000;
 	deleted   = false;
