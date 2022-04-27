@@ -85,6 +85,25 @@ class TMessage extends Message
 class RVersionMessage extends RMessage
 {
 	version;
+
+	static encode(tMessage)
+	{
+		const bytes = [
+			0, 0, 0, 0,
+			Constants.R_VERSION,
+			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
+			... new Uint8Array(new Uint32Array([8192]).buffer),
+			... NString.encode('9P2000')
+		];
+
+		bytes[0] = bytes.length;
+
+		const instance = new this.prototype.constructor;
+
+		instance.blob = Buffer.from(new Uint8Array(bytes));
+
+		return instance;
+	}
 }
 
 class TVersionMessage extends TMessage
@@ -105,15 +124,38 @@ class TVersionMessage extends TMessage
 
 	response()
 	{
-		const blob = Buffer.alloc(this.blob.length);
+		// const blob = Buffer.alloc(this.blob.length);
 
-		this.blob.copy(blob);
+		// this.blob.copy(blob);
 
-		const dataView = new DataView(blob.buffer);
+		// const dataView = new DataView(blob.buffer);
 
-		dataView.setUint8(4, Constants.R_VERSION, true);
+		// dataView.setUint8(4, Constants.R_VERSION, true);
 
-		return RVersionMessage.parse(blob);
+		return RVersionMessage.encode(this);
+	}
+}
+
+class RErrorMessage extends RMessage
+{
+	version;
+
+	static encode(tMessage)
+	{
+		const bytes = [
+			0, 0, 0, 0,
+			Constants.R_ERROR,
+			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
+			... new Uint8Array(new Uint16Array([0]).buffer),
+		];
+
+		bytes[0] = bytes.length;
+
+		const instance = new this.prototype.constructor;
+
+		instance.blob = Buffer.from(new Uint8Array(bytes));
+
+		return instance;
 	}
 }
 
@@ -187,47 +229,58 @@ class RStatMessage extends RMessage
 {
 	static encode(tMessage)
 	{
+		const rMessage = new this.prototype.constructor;
+
 		const file = FileService.getByFid(tMessage.fid);
+
+		if(!file)
+		{
+			return RErrorMessage.encode(tMessage);
+		}
 
 		const statEvent = new Event('stat', {cancelable: true, detail: {file}});
 
-		process.stderr.write(`\u001b[34m STAT: ${tMessage.tag} ${tMessage.fid} ${parent.path}\u001b[39m `);
+		process.stderr.write(`\u001b[34m STAT: ${tMessage.tag} ${tMessage.fid} ${file?.path}\u001b[39m `);
 
 		if(!MessageService.target.dispatchEvent(statEvent))
 		{
 			process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
 
-			return RlErrorMessage.encode(tMessage);
+			return RErrorMessage.encode(tMessage);
+			// return RlErrorMessage.encode(tMessage);
 		}
 
 		process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
 
-		const rMessage = new this.prototype.constructor;
+		const mode = (file.mode << 0) + (file.directory ? 0x80000000 : 0);
+		const stats = [0 ,0];
 
 		const stat = [
-			... new Uint8Array(new Uint16Array([file.size ?? 0]).buffer), // size
-			... new Uint8Array(new Uint16Array([0]).buffer),      // type
-			... new Uint8Array(new Uint32Array([0]).buffer),      // dev
-			... new Uint8Array([0x80]),                           // type
-			... new Uint8Array(new Uint32Array([0]).buffer),      // vers
-			... new Uint8Array(new Uint32Array([0, 0]).buffer),   // path
-			... new Uint8Array([0x7, 0x7, 0x7, 0x80]),            // mode
-			... new Uint8Array(new Uint32Array([0]).buffer),      // atime
-			... new Uint8Array(new Uint32Array([0]).buffer),      // mtime
-			... new Uint8Array(new Uint32Array([0, 0]).buffer),   // length
-			... new Uint8Array([1, 0x0, 0x2F]),                   // name
-			... new Uint8Array([4, 0x0, 0x73, 0x65, 0x61, 0x6e]), // uid
-			... new Uint8Array([4, 0x0, 0x73, 0x65, 0x61, 0x6e]), // gid
-			... new Uint8Array([4, 0x0, 0x73, 0x65, 0x61, 0x6e]), // muid
+			... new Uint8Array(new Uint16Array([0]).buffer), // size
+			... new Uint8Array(new Uint16Array([0]).buffer),                             // type
+			... new Uint8Array(new Uint32Array([0]).buffer),                             // dev
+			... QSession.getQid(file),                                                   // QID
+			... new Uint8Array(new Uint32Array([mode]).buffer),                          // mode
+			... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // atime
+			... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // mtime
+			... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
+			... NString.encode(file.root ? 'root' : file.name),                          // Name
+			... NString.encode('sean'),                                                  // uid
+			... NString.encode('sean'),                                                  // gid
+			... NString.encode('sean'),                                                  // muid
 		];
 
-		stat.splice(0, 2, ... new Uint8Array(new Uint16Array([stat.length]).buffer));
+		Object.assign(stat, new Uint8Array(new Uint16Array([stat.length]).buffer));
+
+		stats.push(...stat);
+
+		Object.assign(stats, new Uint8Array(new Uint16Array([stats.length]).buffer));
 
 		const bytes = [
 			0, 0, 0, 0,
 			Constants.R_STAT,
 			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
-			... stat
+			... stats
 		];
 
 		bytes[0] = bytes.length;
@@ -267,9 +320,9 @@ class RGetAttrMessage extends RMessage
 
 		const qid  = QSession.getQid(file);
 
-		file.aTime = 0;//Math.trunc(Date.now() / 1000);
 		file.size  = file.directory ? 0 : 10;
-		file.mode  = file.directory ? 0o040755 : file.mode;
+
+		const mode = (file.mode << 0) + (file.directory ? 0o040000 : 0);
 
 		const bytes   = [
 			0, 0, 0, 0,
@@ -277,21 +330,21 @@ class RGetAttrMessage extends RMessage
 			... new Uint8Array(new Uint16Array([message.tag]).buffer),
 			... new Uint8Array(new Uint32Array([0x3FFF, 0x0]).buffer),
 			... qid,
-			... new Uint8Array(new Uint32Array([file.mode]).buffer), // mode
+			... new Uint8Array(new Uint32Array([mode]).buffer), // mode
 			... new Uint8Array(new Uint32Array([file.uid ?? 1000]).buffer), // uid
 			... new Uint8Array(new Uint32Array([file.gid ?? 1000]).buffer), // gid
 			... [1, 0, 0, 0, 0, 0, 0, 0],    // nlink
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // rdev
-			... new Uint8Array(new BigInt64Array([BigInt(file.size ?? 0)]).buffer), // size
+			... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer), // size
 			... [0, 0x10, 0, 0, 0, 0, 0, 0], // blockSize
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // blocks
-			... new Uint8Array(new BigInt64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // aTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // aTime
 			... [0, 0, 0, 0, 0, 0, 0, 0], // aTimeNs
-			... new Uint8Array(new BigInt64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // mTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // mTime
 			... [0, 0, 0, 0, 0, 0, 0, 0], // mTimeNs
-			... new Uint8Array(new BigInt64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // cTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // cTime
 			... [0, 0, 0, 0, 0, 0, 0, 0], // cTimeNs
-			... new Uint8Array(new BigInt64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // bTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // bTime
 			... [0, 0, 0, 0, 0, 0, 0, 0], // bTimeNs
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // gen
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // dataversion
@@ -388,7 +441,7 @@ class RWalkMessage extends RMessage
 			Constants.R_WALK,
 			... new Uint8Array(new Uint16Array([message.tag]).buffer),
 			... new Uint8Array(new Uint16Array([(message.walks ? 1 : 0)]).buffer),
-			... qid
+			... (message.walks ? qid : [])
 		];
 
 		instance.size = bytes[0] = bytes.length;
@@ -427,23 +480,26 @@ class TWalkMessage extends TMessage
 	{
 		if(String(this.wName).match(/^\.+\/*$/) || String(this.wName).match(/\//))
 		{
-			return RlErrorMessage.encode(this);
+			return RErrorMessage.encode(tMessage);
+			// return RlErrorMessage.encode(this);
 		}
 
 		const parent = this.file = FileService.getByFid(this.fid);
+		const wName  = this.wName ?? '';
 
 		const walkEvent = new Event('walk', {cancelable: true, detail: {
 			directory: parent.path
-			, file:    this.wName
+			, file:    wName
 		}});
 
-		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.path} ${this.wName}\u001b[39m `);
+		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.path} ${wName}\u001b[39m `);
 
 		if(!MessageService.target.dispatchEvent(walkEvent))
 		{
 			process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
 
-			return RlErrorMessage.encode(this);
+			return RErrorMessage.encode(tMessage);
+			// return RlErrorMessage.encode(this);
 		}
 
 		process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
@@ -455,16 +511,14 @@ class TWalkMessage extends TMessage
 				FileService.assignFid(this.newFid, this.file);
 			}
 
-			const response = RWalkMessage.encode(this);
-
-			return response;
+			return RWalkMessage.encode(this);
 		}
 
-		if(walkEvent.getOverride(parent.canWalkTo(this.wName)))
+		if(walkEvent.getOverride(parent.canWalkTo(wName)))
 		{
 			const fullPath = parent.path === '/'
-				? '/' + this.wName
-				: '/' + parent.fullPath() + '/' + this.wName;
+				? '/' + wName
+				: '/' + parent.fullPath() + '/' + wName;
 
 			const subFile = this.file = FileService.getByPath(fullPath);
 
@@ -473,9 +527,11 @@ class TWalkMessage extends TMessage
 			return super.response()
 		}
 
-		const response = RlErrorMessage.encode(this);
+		return RWalkMessage.encode(this);
 
-		return response;
+		// const response = RlErrorMessage.encode(this);
+
+		// return response;
 	}
 }
 
@@ -578,9 +634,8 @@ class RReadDirMessage extends RMessage
 				const entry = [
 					...qid,
 					0x04,
-					... new Uint8Array(new BigInt64Array([BigInt(++index)]).buffer),
-					... new Uint8Array(new Uint16Array([name.length]).buffer),
-					... Buffer.from(name, 'utf-8'),
+					... new Uint8Array(new BigUint64Array([BigInt(++index)]).buffer),
+					... NString.encode(name)
 				];
 
 				entries.push(...entry);
@@ -721,57 +776,146 @@ class RReadMessage extends RMessage
 	{
 		const file = FileService.getByFid(tMessage.fid);
 
-		const detail = {
-			content:  null
-			, file:   file ? file.path : false
-			, offset: tMessage.offset
-			, count:  tMessage.count
-			, fid:    tMessage.fid
-		};
-
-		const readEvent = new Event('read', {cancelable: true, detail});
-
-		if(!tMessage.offset)
+		if(!file.directory)
 		{
-			process.stderr.write(`\u001b[33m READ: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m `);
-		}
+			const detail = {
+				content:  null
+				, file:   file ? file.path : false
+				, offset: tMessage.offset
+				, count:  tMessage.count
+				, fid:    tMessage.fid
+			};
 
-		if(!MessageService.target.dispatchEvent(readEvent))
-		{
+			const readEvent = new Event('read', {cancelable: true, detail});
+
 			if(!tMessage.offset)
 			{
-				process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
+				process.stderr.write(`\u001b[33m READ: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m `);
 			}
 
-			return RlErrorMessage.encode(tMessage);
-		}
+			if(!MessageService.target.dispatchEvent(readEvent))
+			{
+				if(!tMessage.offset)
+				{
+					process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
+				}
 
-		if(!tMessage.offset)
+				return RlErrorMessage.encode(tMessage);
+			}
+
+			if(!tMessage.offset)
+			{
+				process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
+			}
+
+			const rMessage   = new this.prototype.constructor;
+
+			rMessage.type    = Constants.R_READ;
+			rMessage.TYPE    = 'R_READ';
+			rMessage.tag     = tMessage.tag;
+			rMessage.content = detail.content = !tMessage.offset
+				? String(readEvent.getOverride(file.getContent()))
+				: '';
+
+			const bytes = [
+				0, 0, 0, 0,
+				Constants.R_READ,
+				... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
+				... new Uint8Array(new Uint32Array([rMessage.content.length]).buffer),
+				... Buffer.from(rMessage.content, 'utf-8'),
+			];
+
+			rMessage.size = bytes[0] = bytes.length;
+			rMessage.blob = Buffer.from(new Uint8Array(bytes));
+
+			return rMessage;
+		}
+		else
 		{
-			process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
+			const entries = [0, 0, 0, 0];
+
+			const children = tMessage.offset ? [] : file.getChildren();
+
+			const detail = {
+				content:  children
+				, file:   file
+				, offset: tMessage.offset
+				, count:  tMessage.count
+				, fid:    tMessage.fid
+			};
+
+			const listEvent = new Event('list', {cancelable: true, detail});
+
+			if(!tMessage.offset)
+			{
+				process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m `);
+			}
+
+			if(!MessageService.target.dispatchEvent(listEvent))
+			{
+				if(!tMessage.offset)
+				{
+					process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
+				}
+
+				return RlErrorMessage.encode(tMessage);
+			}
+
+			if(!tMessage.offset)
+			{
+				process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
+			}
+
+			let index = 0;
+
+			for(const file of children)
+			{
+				const name = file.name;
+
+				const mode = (file.mode << 0) + (file.directory ? 0x80000000 : 0);
+
+				const qid   = QSession.getQid(file);
+				const entry = [
+					... new Uint8Array(new Uint16Array([0]).buffer),    // size
+					... new Uint8Array(new Uint16Array([0]).buffer),    // type
+					... new Uint8Array(new Uint32Array([0]).buffer),    // dev
+					... qid,                                            // qid
+					... new Uint8Array(new Uint32Array([mode]).buffer), // mode
+					... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // atime
+					... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // mtime
+					... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
+					... NString.encode(file.root ? '/' : file.name),                             // Name
+					... NString.encode('sean'),                                                  // uid
+					... NString.encode('sean'),                                                  // gid
+					... NString.encode('sean'),                                                  // muid
+				];
+
+				entries.push(...entry);
+			}
+
+			Object.assign(entries, new Uint8Array(new Uint32Array([entries.length]).buffer));
+
+			const bytes = [
+				0, 0, 0, 0,
+				Constants.R_READ,
+				... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
+				... entries
+			];
+
+
+			const rMessage   = new this.prototype.constructor;
+
+			Object.assign(bytes, new Uint8Array(new Uint32Array([rMessage.size = bytes.length]).buffer));
+
+			rMessage.size    = bytes.length;
+			rMessage.type    = Constants.R_READ;
+			rMessage.TYPE    = 'R_READ';
+			rMessage.tag     = tMessage.tag;
+
+			rMessage.blob = Buffer.from(new Uint8Array(bytes));
+
+			return rMessage;
 		}
-
-		const rMessage   = new this.prototype.constructor;
-
-		rMessage.type    = Constants.R_READ;
-		rMessage.TYPE    = 'R_READ';
-		rMessage.tag     = tMessage.tag;
-		rMessage.content = detail.content = !tMessage.offset
-			? String(readEvent.getOverride(file.getContent()))
-			: '';
-
-		const bytes = [
-			0, 0, 0, 0,
-			Constants.R_READ,
-			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
-			... new Uint8Array(new Uint32Array([rMessage.content.length]).buffer),
-			... Buffer.from(rMessage.content, 'utf-8'),
-		];
-
-		rMessage.size = bytes[0] = bytes.length;
-		rMessage.blob = Buffer.from(new Uint8Array(bytes));
-
-		return rMessage;
 	}
 }
 
@@ -858,6 +1002,48 @@ class TWriteMessage extends TMessage
 		instance.offset = dataView.getBigInt64(11, true);
 		instance.count  = dataView.getUint32(19, true);
 		instance.data   = blob.slice(23);
+
+		return instance;
+	}
+}
+
+class ROpenMessage extends RMessage
+{
+	static encode(message)
+	{
+		const instance = new this.prototype.constructor;
+		const file = FileService.getByFid(message.fid);
+
+		const bytes = [
+			0, 0, 0, 0,
+			Constants.R_OPEN,
+			... new Uint8Array(new Uint16Array([message.tag]).buffer),
+			... QSession.getQid(file),
+			... new Uint8Array(new Uint32Array([0]).buffer),
+		];
+
+		instance.size = bytes[0] = bytes.length;
+		instance.blob = Buffer.from(new Uint8Array(bytes));
+
+		instance.type = Constants.R_OPEN;
+		instance.TYPE = 'R_OPEN';
+		instance.tag  = message.tag;
+
+		return instance;
+	}
+}
+
+class TOpenMessage extends TMessage
+{
+	static responseType = ROpenMessage;
+
+	static parse(blob)
+	{
+		const instance  = super.parse(blob);
+		const dataView  = instance.view;
+
+		instance.fid    = dataView.getUint32(7, true);
+		instance.mode   = dataView.getUint8(11, true);
 
 		return instance;
 	}
@@ -1057,6 +1243,14 @@ class MessageService
 
 				case Constants.R_STATFS:
 					messages.push( RStatFsMessage.parse(current) );
+					break;
+
+				case Constants.T_OPEN:
+					messages.push( TOpenMessage.parse(current) );
+					break;
+
+				case Constants.R_OPEN:
+					messages.push( ROpenMessage.parse(current) );
 					break;
 
 				case Constants.T_FLUSH:

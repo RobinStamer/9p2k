@@ -2,6 +2,7 @@ const File = require('./File').File;
 
 class Directory extends File
 {
+	mode      = 0o775;
 	directory = true;
 	children  = [];
 

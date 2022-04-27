@@ -15,8 +15,12 @@ class NString
 		return instance;
 	}
 
-	static encode(bytes)
+	static encode(string)
 	{
+		return [
+			... new Uint8Array(new Uint16Array([string.length]).buffer),
+			... Buffer.from(string, 'utf-8'),
+		];
 	}
 
 	toString()

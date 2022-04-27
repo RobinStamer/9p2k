@@ -9,11 +9,19 @@ process.stderr.write("\n");
 
 class TimeFile extends File
 {
-	mode = 0o100555;
-
 	getContent()
 	{
-		return String(new Date) + "\n";
+		const date = new Date;
+		const formatter = new Intl.DateTimeFormat(
+			'en-US', {
+				timeZone: 'America/Los_Angeles'
+				, timeStyle: 'full'
+				, dateStyle: 'full'
+				, hour12: false
+			}
+		);
+
+		return formatter.format(date) + "\n";
 	}
 }
 
