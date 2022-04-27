@@ -5,12 +5,15 @@ const Directory   = require('./fs/Directory').Directory
 const File        = require('./fs/File').File
 const Server      = require('./net/Server').Server;
 
-const TimeDirectory = require('./example/clocks/TimeDirectory').Server;
-const TimeFile    = require('./example/clocks/TimeFile').Server;
+const TimeDirectory = require('./example/clocks/TimeDirectory').TimeDirectory;
+const TimeFile    = require('./example/clocks/TimeFile').TimeFile;
+
+const ProxyDirectory = require('./example/proxy/ProxyDirectory').ProxyDirectory;
 
 process.stderr.write("\n");
 
-FileService.register(new TimeDirectory({path: '/', exists: true}));
+// FileService.register(new TimeDirectory({path: '/', exists: true}));
+FileService.register(new ProxyDirectory({path: '/', exists: true, realPath: './cam'}));
 
 Server.listen(564, () => console.log(`Listening!`));
 

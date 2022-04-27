@@ -281,8 +281,6 @@ class RStatMessage extends RMessage
 		}
 		// else
 		// {
-		// 	console.log(tMessage);
-
 		// 	const children     = file.getChildren();
 		// 	const unregistered = children.filter( c => !FileService.getByPath(c.fullPath()) );
 
@@ -945,44 +943,37 @@ class RReadMessage extends RMessage
 
 			const readEvent = new Event('read', {cancelable: true, detail});
 
-			if(!tMessage.offset)
-			{
-				process.stderr.write(`\u001b[33m READ: ${tMessage.tag} ${tMessage.fid} ${file.fullPath()}\u001b[39m `);
-			}
+			process.stderr.write(`\u001b[33m READ: ${tMessage.tag} ${tMessage.fid} ${tMessage.offset} ${file.fullPath()}\u001b[39m `);
 
 			if(!MessageService.target.dispatchEvent(readEvent))
 			{
-				if(!tMessage.offset)
-				{
-					process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
-				}
+				process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
 
-				return RlErrorMessage.encode(tMessage);
+				return RErrorMessage.encode(tMessage);
+				// return RlErrorMessage.encode(tMessage);
 			}
 
-			if(!tMessage.offset)
-			{
-				process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
-			}
+			process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
 
 			const rMessage   = new this.prototype.constructor;
 
 			rMessage.type    = Constants.R_READ;
 			rMessage.TYPE    = 'R_READ';
 			rMessage.tag     = tMessage.tag;
-			rMessage.content = detail.content = !tMessage.offset
-				? String(readEvent.getOverride(file.getContent()))
-				: '';
+			rMessage.content = detail.content = readEvent.getOverride(
+				file.getContent(tMessage.offset, tMessage.count)
+			);
 
 			const bytes = [
 				0, 0, 0, 0,
 				Constants.R_READ,
 				... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
 				... new Uint8Array(new Uint32Array([rMessage.content.length]).buffer),
-				... Buffer.from(rMessage.content, 'utf-8'),
+				... rMessage.content,
 			];
 
-			rMessage.size = bytes[0] = bytes.length;
+			Object.assign(bytes, new Uint8Array(new Uint32Array([rMessage.size = bytes.length]).buffer));
+
 			rMessage.blob = Buffer.from(new Uint8Array(bytes));
 
 			return rMessage;
@@ -991,7 +982,7 @@ class RReadMessage extends RMessage
 		{
 			const entries = [0, 0, 0, 0];
 
-			const children = tMessage.offset ? [] : file.getChildren().filter(c => c.exists);
+			const children = file.getChildren().filter(c => c.exists);
 			const unregistered = children.filter( c => !FileService.getByPath(c.fullPath()));
 
 			FileService.register(...unregistered);
@@ -1006,34 +997,25 @@ class RReadMessage extends RMessage
 
 			const listEvent = new Event('list', {cancelable: true, detail});
 
-			if(!tMessage.offset)
-			{
-				process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m `);
-			}
+			process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${tMessage.offset} ${file.path}\u001b[39m `);
 
 			if(!MessageService.target.dispatchEvent(listEvent))
 			{
-				if(!tMessage.offset)
-				{
-					process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
-				}
+				process.stderr.write(`[ \u001b[31mSTOP\u001b[39m ]\n`);
 
 				return RlErrorMessage.encode(tMessage);
 			}
 
-			if(!tMessage.offset)
-			{
-				process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
-			}
+			process.stderr.write(`[ \u001b[32mGO\u001b[39m ]\n`);
 
 			let index = 0;
 
+			const entryList = [];
+
 			for(const file of children)
 			{
-				const name = file.name;
-
-				const mode = (file.mode << 0) + (file.directory ? 0x80000000 : 0);
-
+				const name  = file.name;
+				const mode  = (file.mode << 0) + (file.directory ? 0x80000000 : 0);
 				const qid   = QSession.getQid(file);
 				const entry = [
 					... new Uint8Array(new Uint16Array([0]).buffer),    // size
@@ -1050,10 +1032,31 @@ class RReadMessage extends RMessage
 					... NString.encode('1000'),                                                  // muid
 				];
 
+				entryList.push(entry);
+			}
+
+			const discard = [];
+			const include = [];
+
+			for(const entry of entryList)
+			{
+				if(discard.length < tMessage.offset)
+				{
+					discard.push(...entry);
+					continue;
+				}
+
+				console.log(entries.length, entry.length, entries.length + entry.length, tMessage.count);
+
+				if(entries.length + entry.length > tMessage.count)
+				{
+					break;
+				}
+
 				entries.push(...entry);
 			}
 
-			Object.assign(entries, new Uint8Array(new Uint32Array([entries.length]).buffer));
+			Object.assign(entries, new Uint8Array(new Uint32Array([-4+entries.length]).buffer));
 
 			const bytes = [
 				0, 0, 0, 0,

@@ -1,3 +1,5 @@
+const File = require('../../fs/File').File;
+
 class TimeFile extends File
 {
 	getContent()

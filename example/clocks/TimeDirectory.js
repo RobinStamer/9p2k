@@ -1,3 +1,6 @@
+const Directory = require('../../fs/Directory').Directory;
+const TimeFile = require('./TimeFile').TimeFile;
+
 class TimeDirectory extends Directory
 {
 	populated = false
