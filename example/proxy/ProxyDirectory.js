@@ -6,7 +6,7 @@ class ProxyDirectory extends Directory
 {
 	populated = false
 	realPath  = null;
-	mode      = 0o755;
+	mode      = 0o777;
 
 	constructor(props = {})
 	{

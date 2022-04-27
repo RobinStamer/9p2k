@@ -269,7 +269,7 @@ class RStatMessage extends RMessage
 				... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // atime
 				... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // mtime
 				... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
-				... NString.encode(file.root ? 'root' : file.name),                          // Name
+				... NString.encode(file.root ? '/' : file.name),                          // Name
 				... NString.encode('1000'),                                                  // uid
 				... NString.encode('1000'),                                                  // gid
 				... NString.encode('1000'),                                                  // muid
@@ -1045,8 +1045,6 @@ class RReadMessage extends RMessage
 					discard.push(...entry);
 					continue;
 				}
-
-				console.log(entries.length, entry.length, entries.length + entry.length, tMessage.count);
 
 				if(entries.length + entry.length > tMessage.count)
 				{

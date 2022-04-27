@@ -6,16 +6,21 @@ const File        = require('./fs/File').File
 const Server      = require('./net/Server').Server;
 
 const TimeDirectory = require('./example/clocks/TimeDirectory').TimeDirectory;
-const TimeFile    = require('./example/clocks/TimeFile').TimeFile;
+const TimeFile      = require('./example/clocks/TimeFile').TimeFile;
 
 const ProxyDirectory = require('./example/proxy/ProxyDirectory').ProxyDirectory;
 
-process.stderr.write("\n");
+const input  = new ProxyDirectory({name: 'input', exists: true, realPath: './cam/cam'});
+const output = new Directory({name: 'output', exists: true});
+const root   = new Directory({path: '/', exists: true});
+
+root.addChildren(input, output);
+
+FileService.register(root);
+
+Server.listen(564, () => console.log(`\nListening!`));
 
 // FileService.register(new TimeDirectory({path: '/', exists: true}));
-FileService.register(new ProxyDirectory({path: '/', exists: true, realPath: './cam'}));
-
-Server.listen(564, () => console.log(`Listening!`));
 
 // const childB = new File({name:'something-else', content: 'LMAO!'});
 // const childC = new File({name:'something-different'});
