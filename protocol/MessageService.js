@@ -10,302 +10,29 @@ const Event       = require('../events/Event').Event;
 const File        = require('../fs/File').File;
 const FileService = require('../fs/FileService').FileService;
 
-const Message  = require('./Message').Message;
-const RMessage = require('./RMessage').RMessage;
-const TMessage = require('./TMessage').TMessage;
+const Message    = require('./Message').Message;
+const RMessage   = require('./RMessage').RMessage;
+const TMessage   = require('./TMessage').TMessage;
 
 const RVersionMessage = require('./RVersionMessage').RVersionMessage;
 const TVersionMessage = require('./TVersionMessage').TVersionMessage;
 
-const RErrorMessage = require('./RErrorMessage').RErrorMessage;
+const RErrorMessage   = require('./RErrorMessage').RErrorMessage;
 
-class RAttachMessage extends RMessage
-{
-	static encode(tMessage)
-	{
-		const file = FileService.getByPath('/');
-		const qid  = QSession.getQid(file);
+const TAttachMessage  = require('./TAttachMessage').TAttachMessage;
+const RAttachMessage  = require('./RAttachMessage').RAttachMessage;
 
-		FileService.assignFid(tMessage.fid, file);
+const TStatMessage    = require('./TStatMessage').TStatMessage;
+const RStatMessage    = require('./RStatMessage').RStatMessage;
 
-		const instance = new this.prototype.constructor;
+const TWStatMessage   = require('./TWStatMessage').TWStatMessage;
+const RWStatMessage   = require('./RWStatMessage').RWStatMessage;
 
-		const attachEvent = new Event('attach', {cancelable: true, detail: {file, tMessage}});
+const TRemoveMessage  = require('./TRemoveMessage').TRemoveMessage;
+const RRemoveMessage  = require('./RRemoveMessage').RRemoveMessage;
 
-		process.stderr.write(`\u001b[34m ATCH: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m\n`);
-
-		const bytes = [
-			0, 0, 0, 0,
-			Constants.R_ATTACH,
-			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
-			... qid,
-		];
-
-		Object.assign(bytes, new Uint8Array(new Uint16Array([bytes.length]).buffer));
-
-		instance.size = bytes.length;
-
-		instance.blob = Buffer.from(new Uint8Array(bytes));
-		instance.type = Constants.R_ATTACH;
-		instance.TYPE = 'R_ATTACH';
-		instance.tag  = tMessage.tag;
-
-		return instance;
-	}
-}
-
-class TAttachMessage extends TMessage
-{
-	static responseType = RAttachMessage;
-
-	fid;
-	afid;
-	aName;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.fid   = dataView.getUint32(7, true);
-		instance.afid  = dataView.getUint32(11, true);
-
-		instance.uName = String( NString.decode(blob, 15) );
-		instance.aName = String( NString.decode(blob, 17 + instance.uName.length) );
-
-		return instance;
-	}
-}
-
-class RStatMessage extends RMessage
-{
-	static encode(tMessage)
-	{
-		const rMessage = new this.prototype.constructor;
-
-		const file = FileService.getByFid(tMessage.fid);
-
-		if(!file || !file.exists)
-		{
-			return RErrorMessage.encode(tMessage);
-		}
-
-		const stats = [0, 0];
-
-		if(file)
-		{
-			const mode = (file.mode << 0) + (file.directory ? 0x80000000 : 0);
-			const stat = [
-				... new Uint8Array(new Uint16Array([0]).buffer),    // size
-				... new Uint8Array(new Uint16Array([77]).buffer),   // type
-				... new Uint8Array(new Uint32Array([47]).buffer),   // dev
-				... QSession.getQid(file),                          // QID
-				... new Uint8Array(new Uint32Array([mode]).buffer), // mode
-				... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // atime
-				... new Uint8Array(new Uint32Array([Math.trunc(0)]).buffer),                 // mtime
-				... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
-				... NString.encode(file.root ? '/' : file.name),    // Name
-				... NString.encode('sean'),                         // uid
-				... NString.encode('sean'),                         // gid
-				... NString.encode('sean'),                         // muid
-			];
-
-			Object.assign(stat, new Uint8Array(new Uint16Array([-2+stat.length]).buffer));
-
-			stats.push(...stat);
-		}
-
-		Object.assign(stats, new Uint8Array(new Uint16Array([-2+stats.length]).buffer));
-
-		const bytes = [
-			0, 0, 0, 0,
-			Constants.R_STAT,
-			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
-			... stats
-		];
-
-		Object.assign(bytes, new Uint8Array(new Uint16Array([bytes.length]).buffer));
-
-		rMessage.size = bytes.length;
-		rMessage.blob = Buffer.from(new Uint8Array(bytes));
-
-		rMessage.type = Constants.R_STAT;
-		rMessage.TYPE = 'R_STAT';
-		rMessage.tag  = tMessage.tag;
-
-		return rMessage;
-	}
-}
-
-class TStatMessage extends TMessage
-{
-	static responseType = RStatMessage;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.fid   = dataView.getUint32(7, true);
-
-		return instance;
-	}
-}
-
-class RWStatMessage extends RMessage
-{
-	static encode(tMessage)
-	{
-		const rMessage = new this.prototype.constructor;
-
-		const file = FileService.getByFid(tMessage.fid);
-
-		file.exists = true;
-
-		const bytes = [
-			0, 0, 0, 0,
-			Constants.R_WSTAT,
-			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
-		];
-
-		Object.assign(bytes, new Uint8Array(new Uint16Array([bytes.length]).buffer));
-
-		rMessage.size = bytes.length;
-		rMessage.blob = Buffer.from(new Uint8Array(bytes));
-
-		rMessage.type = Constants.R_WSTAT;
-		rMessage.TYPE = 'R_WSTAT';
-		rMessage.tag  = tMessage.tag;
-
-		return rMessage;
-	}
-}
-
-class TWStatMessage extends TMessage
-{
-	static responseType = RWStatMessage;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.fid   = dataView.getUint32(7, true);
-
-		return instance;
-	}
-}
-
-class RRemoveMessage extends RMessage
-{
-	static encode(tMessage)
-	{
-		const rMessage = new this.prototype.constructor;
-
-		const file = FileService.getByFid(tMessage.fid);
-
-		file.exists = false;
-
-		const bytes = [
-			0, 0, 0, 0,
-			Constants.R_REMOVE,
-			... new Uint8Array(new Uint16Array([tMessage.tag]).buffer),
-		];
-
-		Object.assign(bytes, new Uint8Array(new Uint16Array([bytes.length]).buffer));
-
-		rMessage.size = bytes.length;
-		rMessage.blob = Buffer.from(new Uint8Array(bytes));
-
-		rMessage.type = Constants.R_REMOVE;
-		rMessage.TYPE = 'R_REMOVE';
-		rMessage.tag  = tMessage.tag;
-
-		return rMessage;
-	}
-}
-
-class TRemoveMessage extends TMessage
-{
-	static responseType = RRemoveMessage;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.fid   = dataView.getUint32(7, true);
-
-		return instance;
-	}
-}
-
-class RGetAttrMessage extends RMessage
-{
-	static encode(message)
-	{
-		const instance = new this.prototype.constructor;
-		const file = FileService.getByFid(message.fid);
-
-		const qid  = QSession.getQid(file);
-
-		file.size  = file.directory ? 0 : 10;
-
-		const mode = (file.mode << 0) + (file.directory ? 0o040000 : 0);
-
-		const bytes   = [
-			0, 0, 0, 0,
-			Constants.R_GETATTR,
-			... new Uint8Array(new Uint16Array([message.tag]).buffer),
-			... new Uint8Array(new Uint32Array([0x3FFF, 0x0]).buffer),
-			... qid,
-			... new Uint8Array(new Uint32Array([mode]).buffer),             // mode
-			... new Uint8Array(new Uint32Array([file.uid ?? 1000]).buffer), // uid
-			... new Uint8Array(new Uint32Array([file.gid ?? 1000]).buffer), // gid
-			... [1, 0, 0, 0, 0, 0, 0, 0],    // nlink
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // rdev
-			... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer), // size
-			... [0, 0x10, 0, 0, 0, 0, 0, 0], // blockSize
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // blocks
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // aTime
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // aTimeNs
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // mTime
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // mTimeNs
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // cTime
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // cTimeNs
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // bTime
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // bTimeNs
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // gen
-			... [0, 0, 0, 0, 0, 0, 0, 0],    // dataversion
-		];
-
-		Object.assign(bytes, new Uint8Array(new Uint16Array([bytes.length]).buffer));
-
-		instance.size = bytes.length;
-		instance.blob = Buffer.from(new Uint8Array(bytes));
-
-		instance.type = Constants.R_GETATTR;
-		instance.TYPE = 'R_GETATTR';
-		instance.tag  = message.tag;
-
-		return instance;
-	}
-}
-
-class TGetAttrMessage extends TMessage
-{
-	static responseType = RGetAttrMessage;
-
-	static parse(blob)
-	{
-		const instance = super.parse(blob);
-		const dataView = instance.view;
-
-		instance.fid   = dataView.getUint32(7, true);
-
-		return instance;
-	}
-}
+const RGetAttrMessage = require('./RGetAttrMessage').RGetAttrMessage;
+const TGetAttrMessage = require('./TGetAttrMessage').TGetAttrMessage;
 
 class RSetAttrMessage extends RMessage
 {
@@ -436,7 +163,7 @@ class TWalkMessage extends TMessage
 			return RWalkMessage.encode(this);
 		}
 
-		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName || '.'}\u001b[39m\n`);
+		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
 
 		const fullPath = parent.path === '/'
 				? '/' + wName
@@ -734,7 +461,6 @@ class RReadMessage extends RMessage
 			{
 				process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${tMessage.offset} ${file.fullPath()}\u001b[39m\n`);
 			}
-
 
 			let index = 0;
 

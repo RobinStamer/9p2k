@@ -29,22 +29,28 @@ class GroupDirectory extends Directory
 			const ranker = f => {
 				const time = f.path
 				.replace(/.+\//, '')
-				.replace(/\..+$/, '')
-				.replace(/^(?:\D+_)+/, '')
-				.replace(/(?:_+\D)+/, '')
-				.replace(/_/, ' ')
-				.replace(/^(\d{4})(\d{2})(\d{2}) (\d{2})(\d{2})(\d{2})\D*.*/, '$1-$2-$3 $4:$5:$6');
+				.replace(/.*(\d{8}_\d{6}).*/, '$1')
+				.replace(/^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/, '$1-$2-$3 $4:$5:$6');
 
 				return Date.parse(time);
 			};
 
 			for(const mirrorName of mirrorDirs)
 			{
-				const mirrorPath = this.realPath + '/' + mirrorName + '/Camera';
-				const files  = fs.readdirSync(mirrorPath);
+				let mirrorPath = this.realPath + '/' + mirrorName;
 
-				files.forEach(f => {
-					mirrorFiles.add({path:mirrorPath, name:f, time:ranker({path:f}), source:mirrorName})
+				if(fs.existsSync(mirrorPath + '/Camera'))
+				{
+					mirrorPath += '/Camera';
+				}
+
+				fs.readdirSync(mirrorPath).forEach(f => {
+					const time = ranker({path:f});
+					if(isNaN(time))
+					{
+						return;
+					}
+					mirrorFiles.add({path:mirrorPath, name:f, time, source:mirrorName})
 				});
 			}
 
@@ -57,15 +63,21 @@ class GroupDirectory extends Directory
 			{
 				const filepath = path + '/' + name;
 				const item = {source, path:filepath};
+				const rank = ranker(item);
+
+				if(isNaN(rank))
+				{
+					continue;
+				}
 
 				if(!currentGroup)
 				{
-					currentGroup = new Group(ranker(item), 15*60*1000, ranker);
+					currentGroup = new Group(rank, 15*60*1000, ranker);
 				}
 
 				if(!currentGroup.addItem(item))
 				{
-					currentGroup = new Group(ranker(item), 15*60*1000, ranker);
+					currentGroup = new Group(rank, 15*60*1000, ranker);
 					currentGroup.addItem(item);
 				}
 
