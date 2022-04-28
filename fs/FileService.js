@@ -11,10 +11,10 @@ class FileService
 	{
 		if(this.byFid.has(fid))
 		{
-			if(this.byFid.get(fid) !== file)
-			{
-				throw new Error(`FID ${fid} already assigned!`);
-			}
+			// if(this.byFid.get(fid) !== file)
+			// {
+			// 	throw new Error(`FID ${fid} already assigned!`);
+			// }
 		}
 
 		this.byFid.set(fid, file);

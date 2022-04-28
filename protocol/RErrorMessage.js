@@ -1,4 +1,5 @@
-const RMessage = require('./RMessage').RMessage;
+const RMessage  = require('./RMessage').RMessage;
+const Constants = require('../protocol/Constants');
 
 class RErrorMessage extends RMessage
 {

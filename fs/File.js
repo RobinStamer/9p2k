@@ -4,7 +4,7 @@ class File
 	path    = '';
 	name    = '';
 	size    = 0;
-	mode    = 0o777;
+	mode    = 0o755;
 	uid     = 1000;
 	gid     = 1000;
 	parent  = null;
@@ -42,12 +42,14 @@ class File
 
 	setContent(content)
 	{
-		return this.content = content;
+		return this.content = Buffer.from(content, 'utf-8');
 	}
 
 	getContent()
 	{
-		return this.content ?? (this.path + "\n");
+		return this.content
+			? this.content.slice(offset, Number(offset) + Number(length))
+			: Buffer.from(this.path + "\n");
 	}
 }
 

@@ -2,8 +2,9 @@ const File = require('../../fs/File').File;
 
 class TimeFile extends File
 {
-	getContent()
+	getContent(offset = 0, length = 0)
 	{
+		let string = '';
 		const date = new Date;
 
 		try
@@ -17,12 +18,14 @@ class TimeFile extends File
 				}
 			);
 
-			return formatter.format(date) + "\n";
+			string = formatter.format(date) + "\n";
 		}
 		catch(error)
 		{
-			return String(error) + "\n";;
+			string = String(error) + "\n";
 		}
+
+		return Buffer.from(string, 'utf-8').slice(Number(offset), Number(offset) + Number(length))
 	}
 }
 
