@@ -88,8 +88,6 @@ class GroupDirectory extends Directory
 
 			for(const [label, groups] of days)
 			{
-				console.log(label);
-
 				const dayDirectory = FileService.getByPath(this.fullPath(label), Directory, {name:label, exists:true, parent: this});
 
 				for(const group of groups)
@@ -109,7 +107,6 @@ class GroupDirectory extends Directory
 
 					group.items.forEach(({source, path}) => {
 						const name = source + '-' + path.replace(/.+\//, '');
-						console.log("\t"+name);
 						const file = FileService.getByPath(groupDirectory.fullPath(name), ProxyFile, {
 							parent:   groupDirectory,
 							realPath: path,

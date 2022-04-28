@@ -88,18 +88,12 @@ class RStatMessage extends RMessage
 		if(!file || !file.exists)
 		{
 			return RErrorMessage.encode(tMessage);
-			// return RlErrorMessage.encode(this);
 		}
 
 		const stats = [0, 0];
 
 		if(file)
 		{
-			// if(file.exists)
-			// {
-			// 	file.size = file.directory ? 0 : [...file.getContent()].length;
-			// }
-
 			const mode = (file.mode << 0) + (file.directory ? 0x80000000 : 0);
 			const stat = [
 				... new Uint8Array(new Uint16Array([0]).buffer),    // size
@@ -265,7 +259,7 @@ class RGetAttrMessage extends RMessage
 			... new Uint8Array(new Uint16Array([message.tag]).buffer),
 			... new Uint8Array(new Uint32Array([0x3FFF, 0x0]).buffer),
 			... qid,
-			... new Uint8Array(new Uint32Array([mode]).buffer), // mode
+			... new Uint8Array(new Uint32Array([mode]).buffer),             // mode
 			... new Uint8Array(new Uint32Array([file.uid ?? 1000]).buffer), // uid
 			... new Uint8Array(new Uint32Array([file.gid ?? 1000]).buffer), // gid
 			... [1, 0, 0, 0, 0, 0, 0, 0],    // nlink
@@ -274,13 +268,13 @@ class RGetAttrMessage extends RMessage
 			... [0, 0x10, 0, 0, 0, 0, 0, 0], // blockSize
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // blocks
 			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // aTime
-			... [0, 0, 0, 0, 0, 0, 0, 0], // aTimeNs
+			... [0, 0, 0, 0, 0, 0, 0, 0],    // aTimeNs
 			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // mTime
-			... [0, 0, 0, 0, 0, 0, 0, 0], // mTimeNs
+			... [0, 0, 0, 0, 0, 0, 0, 0],    // mTimeNs
 			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // cTime
-			... [0, 0, 0, 0, 0, 0, 0, 0], // cTimeNs
+			... [0, 0, 0, 0, 0, 0, 0, 0],    // cTimeNs
 			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // bTime
-			... [0, 0, 0, 0, 0, 0, 0, 0], // bTimeNs
+			... [0, 0, 0, 0, 0, 0, 0, 0],    // bTimeNs
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // gen
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // dataversion
 		];
@@ -322,7 +316,7 @@ class RSetAttrMessage extends RMessage
 
 		const qid  = QSession.getQid(file);
 
-		file.aTime = 0;//Math.trunc(Date.now() / 1000);
+		file.aTime = 0;
 		file.size  = file.directory ? 0 : 10;
 
 		const bytes   = [
@@ -375,7 +369,6 @@ class RWalkMessage extends RMessage
 		if(!message.file)
 		{
 			return RErrorMessage.encode(message);
-			// return RlErrorMessage.encode(this);
 		}
 
 		const instance = new this.prototype.constructor;
@@ -428,7 +421,6 @@ class TWalkMessage extends TMessage
 		if(String(this.wName).match(/^\.+\/*$/) || String(this.wName).match(/\//))
 		{
 			return RErrorMessage.encode(tMessage);
-			// return RlErrorMessage.encode(this);
 		}
 
 		const parent = this.file = FileService.getByFid(this.fid);
@@ -689,7 +681,6 @@ class RReadMessage extends RMessage
 		if(!file || !file.exists)
 		{
 			return RErrorMessage.encode(tMessage);
-			// return RlErrorMessage.encode(this);
 		}
 
 		if(!file.directory)
