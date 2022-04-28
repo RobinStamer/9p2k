@@ -32,8 +32,6 @@ class ProxyFile extends File
 
 			if(BigInt(offset) + BigInt(length) > BigInt(stat.size))
 			{
-				console.log(BigInt(offset), BigInt(length), BigInt(stat.size));
-
 				length = (BigInt(offset) + BigInt(length)) - BigInt(stat.size);
 			}
 

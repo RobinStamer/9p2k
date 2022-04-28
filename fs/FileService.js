@@ -72,22 +72,12 @@ class FileService
 					: '/' + file.name;
 			}
 
-			// console.log(path, file, parent);
-
-			if(this.byPath.has(path) && this.byPath.get(path) !== file)
-			{
-				throw new Error(`Path "${path}" already registered!`);
-			}
+			// if(this.byPath.has(path) && this.byPath.get(path) !== file)
+			// {
+			// 	throw new Error(`Path "${path}" already registered!`);
+			// }
 
 			this.byPath.set(path, file);
-
-			// if(file instanceof Directory)
-			// {
-			// 	for(const subFile of file.getChildren())
-			// 	{
-			// 		this.register(subFile);
-			// 	}
-			// }
 		}
 	}
 }

@@ -438,7 +438,7 @@ class TWalkMessage extends TMessage
 			return RWalkMessage.encode(this);
 		}
 
-		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
+		// process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
 
 		const fullPath = parent.path === '/'
 				? '/' + wName
@@ -549,15 +549,7 @@ class RReadDirMessage extends RMessage
 
 			FileService.register(...unregistered);
 
-			const listEvent = new Event('list', {cancelable: true, detail: {
-				directory:  parent.path
-				, children: children
-				, offset:   tMessage.offset
-				, count:    tMessage.count
-				, fid:      tMessage.fid
-			}});
-
-			process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${parent.path}\u001b[39m\n`);
+			// process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${parent.fullPath()}\u001b[39m\n`);
 
 			for(const file of children)
 			{
@@ -759,6 +751,8 @@ class RReadMessage extends RMessage
 			const children = file.getChildren().filter(c => c.exists);
 			const unregistered = children.filter( c => !FileService.getByPath(c.fullPath()));
 
+			console.log(unregistered);
+
 			FileService.register(...unregistered);
 
 			const detail = {
@@ -769,7 +763,11 @@ class RReadMessage extends RMessage
 				, fid:    tMessage.fid
 			};
 
-			process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${tMessage.offset} ${file.path}\u001b[39m\n`);
+			if(!tMessage.offset)
+			{
+				process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${tMessage.offset} ${file.fullPath()}\u001b[39m\n`);
+			}
+
 
 			let index = 0;
 

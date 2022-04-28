@@ -27,7 +27,6 @@ class GroupDirectory extends Directory
 			const children    = new Set;
 
 			const ranker = f => {
-
 				const time = f.path
 				.replace(/.+\//, '')
 				.replace(/\..+$/, '')
@@ -35,9 +34,7 @@ class GroupDirectory extends Directory
 				.replace(/(?:_+\D)+/, '')
 				.replace(/_/, ' ')
 				.replace(/^(\d{4})(\d{2})(\d{2}) (\d{2})(\d{2})(\d{2})\D*.*/, '$1-$2-$3 $4:$5:$6');
-
 				const stamp = Date.parse(time);
-
 				return stamp;
 			};
 
@@ -51,52 +48,88 @@ class GroupDirectory extends Directory
 				});
 			}
 
-			let current = null;
+			let currentGroup = null;
+			let currentDay = null;
 
 			const groups = new Set;
+			const days   = new Map;
 
 			for(const {path, name, time, source} of [...mirrorFiles].sort((a,b) => a.time - b.time))
 			{
 				const filepath = path + '/' + name;
 				const item = {source, path:filepath};
 
-				if(!current)
+				if(!currentGroup)
 				{
-					current = new Group(ranker(item), 15*60*1000, ranker);
+					currentGroup = new Group(ranker(item), 15*60*1000, ranker);
 				}
 
-				if(!current.addItem(item))
+				const [date, time] = currentGroup.getDate().split(', ');
+
+				currentGroup.label = time;
+
+				if(!days.has(date))
 				{
-					groups.add(current);
-
-					current = new Group(ranker(item), 15*60*1000, ranker);
-
-					current.addItem(item);
+					days.set(date, new Set);
 				}
 
-				current && groups.add(current);
+				currentDay = days.get(date);
+
+				currentDay.add(currentGroup);
+				groups.add(currentGroup);
+
+				if(!currentGroup.addItem(item))
+				{
+					currentGroup = new Group(ranker(item), 15*60*1000, ranker);
+					currentGroup.addItem(item);
+				}
 			}
 
-			for(const group of groups)
+			const groupDirs = new Map;
+
+			for(const [label, groups] of days)
 			{
-				const dirName   = String(new Date(group.start)).replace(/\s\(.+/, '');
-				const directory = new Directory({name:dirName, exists:true, parent: this});
+				const dayDirectory = new Directory({name:label, exists:true, parent: this});
 
-				group.items.forEach(({source, path}) => {
-					const realPath = path;
-					const file     = new ProxyFile({name:source + '-' + path.replace(/.+\//, ''), exists:true, parent: directory, realPath});
-					const stat     = fs.lstatSync(realPath);
-					file.size      = stat.size;
-					directory.addChildren(file);
-				});
+				// FileService.register(dayDirectory);
 
-				this.children.push(directory);
+				for(const group of groups)
+				{
+					const date = new Date(group.start);
+
+					if(!groupDirs.has(group))
+					{
+						const newDirectory = new Directory({name:group.label, exists:true, parent: dayDirectory});
+
+						groupDirs.set(group, newDirectory);
+
+						// FileService.register(newDirectory);
+					}
+
+					console.log( group );
+
+					const groupDirectory = groupDirs.get(group);
+
+					group.items.forEach(({source, path}) => {
+						const realPath = path;
+						const file     = new ProxyFile({
+							name:source + '-' + path.replace(/.+\//, ''),
+							parent: groupDirectory,
+							exists:true,
+							realPath
+						});
+						const stat     = fs.lstatSync(realPath);
+						file.size      = stat.size;
+						groupDirectory.addChildren(file);
+						// FileService.register(file);
+					});
+
+					dayDirectory.children.push(groupDirectory);
+				}
+
+				this.children.push(dayDirectory);
 			}
 
-			// for(const child of children)
-			// {
-			// 	this.children.push(child);
-			// }
 
 			this.populated = true;
 		}
