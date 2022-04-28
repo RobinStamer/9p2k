@@ -436,7 +436,7 @@ class TWalkMessage extends TMessage
 			return RWalkMessage.encode(this);
 		}
 
-		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
+		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName || '.'}\u001b[39m\n`);
 
 		const fullPath = parent.path === '/'
 				? '/' + wName
