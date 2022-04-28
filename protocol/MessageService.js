@@ -448,7 +448,7 @@ class TWalkMessage extends TMessage
 
 		if(!this.file)
 		{
-			const children     = parent.getChildren().filter(c => c.exists);
+			const children = parent.getChildren().filter(c => c.exists);
 			const unregistered = children.filter( c => !FileService.getByPath(c.fullPath()) );
 
 			FileService.register(...unregistered);

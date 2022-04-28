@@ -74,7 +74,7 @@ class FileService
 
 			// console.log(path, file, parent);
 
-			if(this.byPath.has(path))
+			if(this.byPath.has(path) && this.byPath.get(path) !== file)
 			{
 				throw new Error(`Path "${path}" already registered!`);
 			}
