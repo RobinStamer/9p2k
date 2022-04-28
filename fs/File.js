@@ -28,16 +28,26 @@ class File
 		}
 	}
 
-	fullPath()
+	fullPath(childName = null)
 	{
-		if(this.parent)
+		if(childName === null)
 		{
-			return (this.parent.path !== '/')
-				? this.parent.fullPath() + '/' + this.name
-				: '/' + this.name;
+			if(this.parent)
+			{
+				return (this.parent.path !== '/')
+					? this.parent.fullPath() + '/' + this.name
+					: '/' + this.name;
+			}
+
+			return '/';
 		}
 
-		return '/';
+		if(this.parent)
+		{
+			return this.fullPath() + '/' + childName;
+		}
+
+		return '/' + childName;
 	}
 
 	setContent(content)

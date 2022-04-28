@@ -1,5 +1,6 @@
-const Directory = require('../../fs/Directory').Directory;
-const ProxyFile = require('./ProxyFile').ProxyFile;
+const FileService = require('../../fs/FileService').FileService;
+const Directory   = require('../../fs/Directory').Directory;
+const ProxyFile   = require('./ProxyFile').ProxyFile;
 const fs = require('fs');
 
 class ProxyDirectory extends Directory
@@ -24,21 +25,22 @@ class ProxyDirectory extends Directory
 			this.children.push(...files.map(name => {
 				const realPath = this.realPath + '/' +name;
 				const stat  = fs.lstatSync(realPath);
+
 				const props = {
-					name,
-					parent:this,
-					exists:true,
-					content:name,
+					size:    stat.size,
+					parent:  this,
+					exists:  true,
+					content: name,
 					realPath,
-					size: stat.size
+					name,
 				};
 
 				if(stat.isDirectory())
 				{
-					return new ProxyDirectory(props);
+					return FileService.getByPath(this.fullPath(name), ProxyDirectory, props);
 				}
 
-				return new ProxyFile(props)
+				return FileService.getByPath(this.fullPath(name), ProxyFile, props);
 			}));
 
 			this.populated = true;
@@ -49,16 +51,19 @@ class ProxyDirectory extends Directory
 
 	newFile(name, exists = true)
 	{
-		if(name[0] === '.')
-		{
-			return;
-		}
+		return;
+		// if(name[0] === '.')
+		// {
+		// 	return;
+		// }
 
-		const file = new ProxyFile({name,parent:this,exists});
+		// const path = this.fullPath(name);
 
-		this.addChildren(file);
+		// const file = FileService.getByPath(path, ProxyFile, {name, exists, parent:this});
 
-		return file;
+		// this.addChildren(file);
+
+		// return file;
 	}
 }
 

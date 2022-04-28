@@ -42,11 +42,13 @@ class Directory extends File
 
 	newFile(name, exists = true)
 	{
-		const file = new File({name,exists,parent:this});
+		return;
 
-		this.addChildren(file);
+		// const file = new File({name,exists,parent:this});
 
-		return file;
+		// this.addChildren(file);
+
+		// return file;
 	}
 }
 

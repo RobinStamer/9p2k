@@ -34,8 +34,8 @@ class GroupDirectory extends Directory
 				.replace(/(?:_+\D)+/, '')
 				.replace(/_/, ' ')
 				.replace(/^(\d{4})(\d{2})(\d{2}) (\d{2})(\d{2})(\d{2})\D*.*/, '$1-$2-$3 $4:$5:$6');
-				const stamp = Date.parse(time);
-				return stamp;
+
+				return Date.parse(time);
 			};
 
 			for(const mirrorName of mirrorDirs)
@@ -51,7 +51,6 @@ class GroupDirectory extends Directory
 			let currentGroup = null;
 			let currentDay = null;
 
-			const groups = new Set;
 			const days   = new Map;
 
 			for(const {path, name, time, source} of [...mirrorFiles].sort((a,b) => a.time - b.time))
@@ -64,9 +63,15 @@ class GroupDirectory extends Directory
 					currentGroup = new Group(ranker(item), 15*60*1000, ranker);
 				}
 
+				if(!currentGroup.addItem(item))
+				{
+					currentGroup = new Group(ranker(item), 15*60*1000, ranker);
+					currentGroup.addItem(item);
+				}
+
 				const [date, time] = currentGroup.getDate().split(', ');
 
-				currentGroup.label = time;
+				currentGroup.label = time.replace(':', '.');
 
 				if(!days.has(date))
 				{
@@ -76,52 +81,44 @@ class GroupDirectory extends Directory
 				currentDay = days.get(date);
 
 				currentDay.add(currentGroup);
-				groups.add(currentGroup);
 
-				if(!currentGroup.addItem(item))
-				{
-					currentGroup = new Group(ranker(item), 15*60*1000, ranker);
-					currentGroup.addItem(item);
-				}
 			}
 
 			const groupDirs = new Map;
 
 			for(const [label, groups] of days)
 			{
-				const dayDirectory = new Directory({name:label, exists:true, parent: this});
+				console.log(label);
 
-				// FileService.register(dayDirectory);
+				const dayDirectory = FileService.getByPath(this.fullPath(label), Directory, {name:label, exists:true, parent: this});
 
 				for(const group of groups)
 				{
-					const date = new Date(group.start);
-
 					if(!groupDirs.has(group))
 					{
-						const newDirectory = new Directory({name:group.label, exists:true, parent: dayDirectory});
+						const newDirectory = FileService.getByPath(
+							dayDirectory.fullPath(group.label),
+							Directory,
+							{name:group.label, exists:true, parent: dayDirectory}
+						);
 
 						groupDirs.set(group, newDirectory);
-
-						// FileService.register(newDirectory);
 					}
-
-					console.log( group );
 
 					const groupDirectory = groupDirs.get(group);
 
 					group.items.forEach(({source, path}) => {
-						const realPath = path;
-						const file     = new ProxyFile({
-							name:source + '-' + path.replace(/.+\//, ''),
-							parent: groupDirectory,
-							exists:true,
-							realPath
+						const name = source + '-' + path.replace(/.+\//, '');
+						console.log("\t"+name);
+						const file = FileService.getByPath(groupDirectory.fullPath(name), ProxyFile, {
+							parent:   groupDirectory,
+							realPath: path,
+							exists:   true,
+							name,
 						});
-						const stat     = fs.lstatSync(realPath);
-						file.size      = stat.size;
+						const stat = fs.lstatSync(path);
+						file.size  = stat.size;
 						groupDirectory.addChildren(file);
-						// FileService.register(file);
 					});
 
 					dayDirectory.children.push(groupDirectory);
@@ -129,7 +126,6 @@ class GroupDirectory extends Directory
 
 				this.children.push(dayDirectory);
 			}
-
 
 			this.populated = true;
 		}

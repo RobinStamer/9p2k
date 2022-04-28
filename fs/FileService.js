@@ -40,21 +40,25 @@ class FileService
 		this.byFid.delete(fid);
 	}
 
-	static getByPath(path, directory = false)
+	static getByPath(path, type = File, options = {})
 	{
 		if(this.byPath.has(path))
 		{
 			return this.byPath.get(path);
 		}
 
-		// const file = new (directory ? Directory : File)({path});
+		if(!type)
+		{
+			return;
+		}
 
-		// file.directory = file.directory || directory;
-		// file.qid  = Qid.for(this.byPath.size, directory);
+		options.path = path;
 
-		// this.byPath.set(path, file);
+		const file = new type(options);
 
-		// return file;
+		this.byPath.set(path, file)
+
+		return file;
 	}
 
 	static register(...files)
@@ -67,17 +71,23 @@ class FileService
 
 			if(parent)
 			{
-				path = (parent.path !== '/')
-					? parent.fullPath() + '/' + file.name
-					: '/' + file.name;
+				path = parent.fullPath(file.name);
 			}
 
-			// if(this.byPath.has(path) && this.byPath.get(path) !== file)
-			// {
-			// 	throw new Error(`Path "${path}" already registered!`);
-			// }
+			if(this.byPath.has(path) && this.byPath.get(path) !== file)
+			{
+				throw new Error(`Path "${path}" already registered!`);
+			}
 
 			this.byPath.set(path, file);
+
+			if(file instanceof Directory)
+			{
+				for(const child of file.getChildren())
+				{
+					this.register(child);
+				}
+			}
 		}
 	}
 }

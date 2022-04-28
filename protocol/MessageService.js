@@ -85,6 +85,12 @@ class RStatMessage extends RMessage
 
 		const file = FileService.getByFid(tMessage.fid);
 
+		if(!file || !file.exists)
+		{
+			return RErrorMessage.encode(tMessage);
+			// return RlErrorMessage.encode(this);
+		}
+
 		const stats = [0, 0];
 
 		if(file)
@@ -438,33 +444,13 @@ class TWalkMessage extends TMessage
 			return RWalkMessage.encode(this);
 		}
 
-		// process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
+		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
 
 		const fullPath = parent.path === '/'
 				? '/' + wName
 				: parent.fullPath() + '/' + wName;
 
-		this.file = FileService.getByPath(fullPath);
-
-		if(!this.file)
-		{
-			const children = parent.getChildren().filter(c => c.exists);
-			const unregistered = children.filter( c => !FileService.getByPath(c.fullPath()) );
-
-			FileService.register(...unregistered);
-
-			this.file = FileService.getByPath(fullPath);
-		}
-
-		if(!this.file)
-		{
-			this.file = parent.newFile(wName, false);
-
-			if(this.file)
-			{
-				FileService.register(this.file);
-			}
-		}
+		this.file = FileService.getByPath(fullPath, false);
 
 		FileService.assignFid(this.newFid, this.file);
 
@@ -544,12 +530,7 @@ class RReadDirMessage extends RMessage
 		{
 			let index = 0;
 
-			const children     = parent.getChildren().filter(c => c.exists);
-			const unregistered = children.filter( c => !FileService.getByPath(c.fullPath()) );
-
-			FileService.register(...unregistered);
-
-			// process.stderr.write(`\u001b[36m LIST: ${tMessage.tag} ${tMessage.fid} ${parent.fullPath()}\u001b[39m\n`);
+			const children = parent.getChildren().filter(c => c.exists);
 
 			for(const file of children)
 			{
@@ -749,11 +730,6 @@ class RReadMessage extends RMessage
 			const entries = [0, 0, 0, 0];
 
 			const children = file.getChildren().filter(c => c.exists);
-			const unregistered = children.filter( c => !FileService.getByPath(c.fullPath()));
-
-			console.log(unregistered);
-
-			FileService.register(...unregistered);
 
 			const detail = {
 				content:  children
@@ -912,9 +888,8 @@ class ROpenMessage extends RMessage
 	static encode(message)
 	{
 		const instance = new this.prototype.constructor;
-		const file = FileService.getByFid(message.fid);
-
-		const bytes = [
+		const file     = FileService.getByFid(message.fid);
+		const bytes    = [
 			0, 0, 0, 0,
 			Constants.R_OPEN,
 			... new Uint8Array(new Uint16Array([message.tag]).buffer),
