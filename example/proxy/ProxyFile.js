@@ -40,6 +40,8 @@ class ProxyFile extends File
 
 			fs.readSync(fd, buffer, 0, Number(length), offset)
 
+			fs.closeSync(fd);
+
 			return buffer;
 		}
 
