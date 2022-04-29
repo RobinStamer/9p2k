@@ -1,8 +1,9 @@
-const FileService = require('../fs/FileService').FileService;
-const Constants   = require('./Constants');
-const RMessage    = require('./RMessage').RMessage;
-const QSession    = require('../session/QSession').QSession;
-const NString     = require('../protocol/NString').NString;
+const FileService   = require('../fs/FileService').FileService;
+const Constants     = require('./Constants');
+const RMessage      = require('./RMessage').RMessage;
+const RErrorMessage = require('./RErrorMessage').RErrorMessage;
+const QSession      = require('../session/QSession').QSession;
+const NString       = require('../protocol/NString').NString;
 
 class RStatMessage extends RMessage
 {
