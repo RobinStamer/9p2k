@@ -8,7 +8,7 @@ const ProxyDirectory = require('./example/proxy/ProxyDirectory').ProxyDirectory;
 const GroupDirectory = require('./example/proxy/GroupDirectory').GroupDirectory;
 // const TimeDirectory = require('./example/clocks/TimeDirectory').TimeDirectory;
 
-const [bin, script, sourceDir] = process.argv;
+const [bin, script, sourceDir, address, port] = process.argv;
 
 const root   = FileService.getByPath('/', Directory, {exists: true});
 const input  = FileService.getByPath('/input', ProxyDirectory, {name: 'input', exists: true, realPath: sourceDir});
@@ -16,4 +16,12 @@ const output = FileService.getByPath('/output', GroupDirectory, {name: 'output',
 
 root.addChildren(input, output);
 
-Server.listen(564, '0.0.0.0', () => console.log(`\nListening!`));
+if(address && address[0] === '/')
+{
+	Server.listen(address, () => console.log(`\nListening!`));
+}
+else
+{
+	Server.listen(port ?? 564, address ?? '0.0.0.0', () => console.log(`\nListening!`));
+}
+
