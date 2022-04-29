@@ -9,14 +9,12 @@ class TimeFile extends File
 
 		try
 		{
-			const formatter = new Intl.DateTimeFormat(
-				'en-US', {
-					timeZone: String(this.content ?? '').trim() || 'GMT'
-					, timeStyle: 'full'
-					, dateStyle: 'full'
-					, hour12: false
-				}
-			);
+			const formatter = new Intl.DateTimeFormat('en-US', {
+				timeZone:    String(this.content ?? '').trim() || 'GMT'
+				, timeStyle: 'full'
+				, dateStyle: 'full'
+				, hour12:    false
+			});
 
 			string = formatter.format(date) + "\n";
 		}

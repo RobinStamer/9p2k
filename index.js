@@ -16,4 +16,4 @@ const output = FileService.getByPath('/output', GroupDirectory, {name: 'output',
 
 root.addChildren(input, output);
 
-Server.listen(564, () => console.log(`\nListening!`));
+Server.listen(564, '0.0.0.0', () => console.log(`\nListening!`));
