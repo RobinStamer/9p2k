@@ -11,11 +11,6 @@ class ProxyFile extends File
 		super(props);
 
 		this.realPath = props.realPath;
-
-		const stat = fs.lstatSync(this.realPath);
-
-		this.mTime = Date.parse(stat.mtime)/1000;
-		this.aTime = Date.parse(stat.atime)/1000;
 	}
 
 	getContent(offset = 0, length = undefined)

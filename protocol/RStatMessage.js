@@ -29,13 +29,13 @@ class RStatMessage extends RMessage
 				... new Uint8Array(new Uint32Array([47]).buffer),   // dev
 				... QSession.getQid(file),                          // QID
 				... new Uint8Array(new Uint32Array([mode]).buffer), // mode
-				... new Uint8Array(new Uint32Array([file.aTime ?? Math.trunc(Date.now() / 1000)]).buffer), // atime
-				... new Uint8Array(new Uint32Array([file.mTime ?? Math.trunc(0)]).buffer),                 // mtime
+				... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // atime
+				... new Uint8Array(new Uint32Array([Math.trunc(0)]).buffer),                 // mtime
 				... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
 				... NString.encode(file.root ? '/' : file.name),    // Name
-				... new Uint8Array(new Uint16Array([1000]).buffer), // uid
-				... new Uint8Array(new Uint16Array([1000]).buffer), // gid
-				... new Uint8Array(new Uint16Array([1000]).buffer), // muid
+				... NString.encode('sean'),                         // uid
+				... NString.encode('sean'),                         // gid
+				... NString.encode('sean'),                         // muid
 			];
 
 			Object.assign(stat, new Uint8Array(new Uint16Array([-2+stat.length]).buffer));
