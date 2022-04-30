@@ -112,8 +112,6 @@ class GroupDirectory extends Directory
 			{
 				const path = this.fullPath(label);
 
-				console.log(label, path);
-
 				const dayDirectory = FileService.getByPath(path, Directory, {name:label, exists:true, parent: this});
 
 				this.children.add(dayDirectory);
