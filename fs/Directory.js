@@ -4,7 +4,7 @@ class Directory extends File
 {
 	mode      = 0o755;
 	directory = true;
-	children  = [];
+	children  = new Set;
 
 	constructor(props = {})
 	{
@@ -30,14 +30,16 @@ class Directory extends File
 
 	getChildren()
 	{
-		return this.children;
+		return [...this.children];
 	}
 
 	addChildren(...children)
 	{
-		children.forEach(c => c.parent = this);
+		children.forEach(c => {
+			c.parent = this
+			this.children.add(c);
+		});
 
-		this.children.push(...children);
 	}
 
 	newFile(name, exists = true)

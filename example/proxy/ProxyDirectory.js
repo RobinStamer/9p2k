@@ -21,14 +21,13 @@ class ProxyDirectory extends Directory
 		if(this.populated && Date.now() - this.populated > 5000)
 		{
 			this.populated = false;
-			this.children  = [];
 		}
 
 		if(!this.populated)
 		{
 			const files = fs.readdirSync(this.realPath);
 
-			this.children.push(...files.map(name => {
+			this.children.add(...files.map(name => {
 				const realPath = this.realPath + '/' +name;
 				const stat  = fs.lstatSync(realPath);
 
@@ -49,10 +48,10 @@ class ProxyDirectory extends Directory
 				return FileService.getByPath(this.fullPath(name), ProxyFile, props);
 			}));
 
-			this.populated = true;
+			this.populated = Date.now();
 		}
 
-		return this.children;
+		return [...this.children];
 	}
 
 	newFile(name, exists = true)

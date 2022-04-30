@@ -23,7 +23,6 @@ class GroupDirectory extends Directory
 		if(this.populated && Date.now() - this.populated > 5000)
 		{
 			this.populated = false;
-			this.children  = [];
 		}
 
 		if(!this.populated)
@@ -136,16 +135,16 @@ class GroupDirectory extends Directory
 						groupDirectory.addChildren(file);
 					});
 
-					dayDirectory.children.push(groupDirectory);
+					dayDirectory.children.add(groupDirectory);
 				}
 
-				this.children.push(dayDirectory);
+				this.children.add(dayDirectory);
 			}
 
-			this.populated = true;
+			this.populated = Date.now();
 		}
 
-		return this.children;
+		return [...this.children];
 	}
 }
 

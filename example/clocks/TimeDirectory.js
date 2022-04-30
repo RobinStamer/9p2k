@@ -9,13 +9,13 @@ class TimeDirectory extends Directory
 	{
 		if(!this.populated)
 		{
-			this.children.push(
+			// this.children.push(
 				// new TimeDirectory({name:'more-clocks',parent:this,exists:true}),
 				// new TimeFile({name:'gmt',parent:this,exists:true,content:''}),
 				// new TimeFile({name:'new-york',parent:this,exists:true,content:'America/New_York'}),
 				// new TimeFile({name:'chicago',parent:this,exists:true,content:'America/Chicago'}),
 				// new TimeFile({name:'los-angeles',parent:this,exists:true,content:'America/Los_Angeles'}),
-			);
+			// );
 
 			this.populated = true;
 		}
