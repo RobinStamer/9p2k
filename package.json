@@ -1,10 +1,11 @@
 {
   "name": "ninep2k",
-  "version": "0.0.0",
+  "version": "0.0.0-c",
   "description": "9P2000 server for Node JS.",
   "main": "index.js",
   "author": "Sean Morris",
   "license": "GPLv3",
+  "bin":{ "ninep2k": "index.js" },
   "files": [
     "example/proxy/ProxyFile.js",
     "example/proxy/GroupDirectory.js",

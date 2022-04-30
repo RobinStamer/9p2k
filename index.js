@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const MessageService = require('./protocol/MessageService').MessageService;
 
 const FileService = require('./fs/FileService').FileService
