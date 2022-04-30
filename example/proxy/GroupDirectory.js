@@ -16,6 +16,8 @@ class GroupDirectory extends Directory
 		super(props);
 
 		this.realPath = props.realPath;
+
+		this.getChildren();
 	}
 
 	getChildren()
@@ -66,7 +68,10 @@ class GroupDirectory extends Directory
 
 			for(const {path, name, time, source} of [...mirrorFiles].sort((a,b) => a.time - b.time))
 			{
-				const filepath = path + '/' + name;
+				const filepath = path === '/'
+					? '/' + name
+					: path + '/' + name;
+
 				const item = {source, path:filepath};
 				const rank = ranker(item);
 
@@ -105,7 +110,13 @@ class GroupDirectory extends Directory
 
 			for(const [label, groups] of days)
 			{
-				const dayDirectory = FileService.getByPath(this.fullPath(label), Directory, {name:label, exists:true, parent: this});
+				const path = this.fullPath(label);
+
+				console.log(label, path);
+
+				const dayDirectory = FileService.getByPath(path, Directory, {name:label, exists:true, parent: this});
+
+				this.children.add(dayDirectory);
 
 				for(const group of groups)
 				{
@@ -122,6 +133,8 @@ class GroupDirectory extends Directory
 
 					const groupDirectory = groupDirs.get(group);
 
+					dayDirectory.children.add(groupDirectory);
+
 					group.items.forEach(({source, path}) => {
 						const name = source + '-' + path.replace(/.+\//, '');
 						const file = FileService.getByPath(groupDirectory.fullPath(name), ProxyFile, {
@@ -135,10 +148,8 @@ class GroupDirectory extends Directory
 						groupDirectory.addChildren(file);
 					});
 
-					dayDirectory.children.add(groupDirectory);
 				}
 
-				this.children.add(dayDirectory);
 			}
 
 			this.populated = Date.now();

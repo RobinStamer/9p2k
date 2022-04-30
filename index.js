@@ -13,8 +13,8 @@ const GroupDirectory = require('./example/proxy/GroupDirectory').GroupDirectory;
 const [bin, script, sourceDir, address, port] = process.argv;
 
 const root   = FileService.getByPath('/', Directory, {exists: true});
-const input  = FileService.getByPath('/input', ProxyDirectory, {name: 'input', exists: true, realPath: sourceDir});
-const output = FileService.getByPath('/output', GroupDirectory, {name: 'output', exists: true, realPath: sourceDir});
+const input  = FileService.getByPath('/input', ProxyDirectory, {name: 'input', exists: true, realPath: sourceDir, parent:root});
+const output = FileService.getByPath('/output', GroupDirectory, {name: 'output', exists: true, realPath: sourceDir, parent:root});
 
 root.addChildren(input, output);
 

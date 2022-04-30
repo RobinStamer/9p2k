@@ -14,6 +14,8 @@ class ProxyDirectory extends Directory
 		super(props);
 
 		this.realPath = props.realPath;
+
+		this.getChildren();
 	}
 
 	getChildren()
@@ -28,7 +30,7 @@ class ProxyDirectory extends Directory
 			const files = fs.readdirSync(this.realPath);
 
 			files.forEach(name => {
-				const realPath = this.realPath + '/' +name;
+				const realPath = this.realPath + '/' + name;
 				const stat  = fs.lstatSync(realPath);
 
 				const props = {
