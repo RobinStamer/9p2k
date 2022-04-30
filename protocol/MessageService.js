@@ -163,7 +163,7 @@ class TWalkMessage extends TMessage
 			return RWalkMessage.encode(this);
 		}
 
-		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
+		// process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
 
 		const fullPath = parent.path === '/'
 				? '/' + wName
@@ -481,9 +481,9 @@ class RReadMessage extends RMessage
 					... new Uint8Array(new Uint32Array([Math.trunc(0)]).buffer),                 // mtime
 					... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
 					... NString.encode(file.root ? '/' : file.name),    // Name
-					... NString.encode('sean'),                         // uid
-					... NString.encode('sean'),                         // gid
-					... NString.encode('sean'),                         // muid
+					... new Uint8Array(new Uint16Array([1000]).buffer), // uid
+					... new Uint8Array(new Uint16Array([1000]).buffer), // gid
+					... new Uint8Array(new Uint16Array([1000]).buffer), // muid
 				];
 
 				entryList.push(entry);

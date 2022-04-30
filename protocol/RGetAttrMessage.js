@@ -29,13 +29,13 @@ class RGetAttrMessage extends RMessage
 			... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer), // size
 			... [0, 0x10, 0, 0, 0, 0, 0, 0], // blockSize
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // blocks
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // aTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc((file.aTime ?? Date.now() / 1000)))]).buffer), // aTime
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // aTimeNs
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // mTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc((file.mTime ?? Date.now() / 1000)))]).buffer), // mTime
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // mTimeNs
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // cTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc((file.cTime ?? Date.now() / 1000)))]).buffer), // cTime
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // cTimeNs
-			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc(Date.now() / 1000))]).buffer), // bTime
+			... new Uint8Array(new BigUint64Array([BigInt(Math.trunc((file.bTime ?? Date.now() / 1000)))]).buffer), // bTime
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // bTimeNs
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // gen
 			... [0, 0, 0, 0, 0, 0, 0, 0],    // dataversion

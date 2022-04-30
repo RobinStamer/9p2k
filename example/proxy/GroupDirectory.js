@@ -7,7 +7,7 @@ const fs          = require('fs');
 
 class GroupDirectory extends Directory
 {
-	populated = false
+	populated = false;
 	realPath  = null;
 	mode      = 0o555;
 
@@ -20,6 +20,11 @@ class GroupDirectory extends Directory
 
 	getChildren()
 	{
+		if(this.populated && Date.now() - this.populated > 5000)
+		{
+			this.populated = false;
+		}
+
 		if(!this.populated)
 		{
 			const mirrorDirs  = fs.readdirSync(this.realPath);
@@ -136,7 +141,7 @@ class GroupDirectory extends Directory
 				this.children.push(dayDirectory);
 			}
 
-			this.populated = true;
+			this.populated = Date.now();
 		}
 
 		return this.children;
