@@ -5,7 +5,7 @@
 ### Install
 
 ```bash
-$ npm i -g nineP2k
+$ npm i -g ninep2k
 ```
 
 ### Usage
