@@ -27,7 +27,7 @@ class ProxyDirectory extends Directory
 		{
 			const files = fs.readdirSync(this.realPath);
 
-			this.children.add(...files.map(name => {
+			files.forEach(name => {
 				const realPath = this.realPath + '/' +name;
 				const stat  = fs.lstatSync(realPath);
 
@@ -42,11 +42,21 @@ class ProxyDirectory extends Directory
 
 				if(stat.isDirectory())
 				{
-					return FileService.getByPath(this.fullPath(name), ProxyDirectory, props);
+					const file = FileService.getByPath(this.fullPath(name), ProxyDirectory, props);
+
+					this.children.add(file);
+
+					return;
 				}
 
-				return FileService.getByPath(this.fullPath(name), ProxyFile, props);
-			}));
+				const file = FileService.getByPath(this.fullPath(name), ProxyFile, props);
+
+				this.children.add(file);
+			});
+
+			if(files.length)
+			{
+			}
 
 			this.populated = Date.now();
 		}
