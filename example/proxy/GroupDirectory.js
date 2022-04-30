@@ -20,6 +20,12 @@ class GroupDirectory extends Directory
 
 	getChildren()
 	{
+		if(this.populated && Date.now() - this.populated > 5000)
+		{
+			this.populated = false;
+			this.children  = [];
+		}
+
 		if(!this.populated)
 		{
 			const mirrorDirs  = fs.readdirSync(this.realPath);

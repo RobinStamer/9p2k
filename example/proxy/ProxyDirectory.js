@@ -18,6 +18,12 @@ class ProxyDirectory extends Directory
 
 	getChildren()
 	{
+		if(this.populated && Date.now() - this.populated > 5000)
+		{
+			this.populated = false;
+			this.children  = [];
+		}
+
 		if(!this.populated)
 		{
 			const files = fs.readdirSync(this.realPath);

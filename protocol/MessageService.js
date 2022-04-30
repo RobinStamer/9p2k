@@ -477,8 +477,8 @@ class RReadMessage extends RMessage
 					... new Uint8Array(new Uint32Array([0]).buffer),    // dev
 					... qid,                                            // qid
 					... new Uint8Array(new Uint32Array([mode]).buffer), // mode
-					... new Uint8Array(new Uint32Array([Math.trunc(Date.now() / 1000)]).buffer), // atime
-					... new Uint8Array(new Uint32Array([Math.trunc(0)]).buffer),                 // mtime
+					... new Uint8Array(new Uint32Array([Math.trunc(file.aTime ?? (Date.now() / 1000))]).buffer), // atime
+					... new Uint8Array(new Uint32Array([Math.trunc(file.mTime ?? 0)]).buffer),                 // mtime
 					... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
 					... NString.encode(file.root ? '/' : file.name),    // Name
 					... NString.encode('sean'),                         // uid
