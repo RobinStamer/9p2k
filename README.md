@@ -5,21 +5,31 @@
 ### Install
 
 ```bash
-$ npm install nineP2k
+$ npm i -g nineP2k
 ```
 
 ### Usage
 ```bash
-$ nodejs ...
+$ nineP2k directory socket
+$ nineP2k directory listen-address
+$ nineP2k directory listen-address listen-port
 ```
 
-### Implementing a handler
+### Implementing a File
 
 ```javascript
+const File = require('ninep2k/fs/File').File;
 
-class Handler
-{
-	// ...
-}
+class ExampleFile extends File
+{}
+```
+
+### Implementing a Directory
+
+```javascript
+const Directory = require('ninep2k/fs/Directory').Directory;
+
+class ExampleDirectory extends Directory
+{}
 
 ```
