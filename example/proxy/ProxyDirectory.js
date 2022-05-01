@@ -27,6 +27,12 @@ class ProxyDirectory extends Directory
 
 		if(!this.populated)
 		{
+			if(!fs.existsSync(this.realPath))
+			{
+				this.exists = false;
+				return [];
+			}
+
 			const files = fs.readdirSync(this.realPath);
 
 			files.forEach(name => {

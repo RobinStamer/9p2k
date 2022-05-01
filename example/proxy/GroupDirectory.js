@@ -108,6 +108,8 @@ class GroupDirectory extends Directory
 
 			const groupDirs = new Map;
 
+			this.children.forEach(c => c.exists = 0o000);
+
 			for(const [label, groups] of days)
 			{
 				const path = this.fullPath(label);
@@ -115,6 +117,10 @@ class GroupDirectory extends Directory
 				const dayDirectory = FileService.getByPath(path, Directory, {name:label, exists:true, parent: this});
 
 				this.children.add(dayDirectory);
+
+				dayDirectory.exists = 0o755;
+
+				dayDirectory.children.forEach(c => c.exists = false);
 
 				for(const group of groups)
 				{
@@ -130,6 +136,8 @@ class GroupDirectory extends Directory
 					}
 
 					const groupDirectory = groupDirs.get(group);
+
+					groupDirectory.exists = true;
 
 					dayDirectory.children.add(groupDirectory);
 

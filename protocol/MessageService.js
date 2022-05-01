@@ -166,8 +166,8 @@ class TWalkMessage extends TMessage
 		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
 
 		const fullPath = parent.path === '/'
-				? '/' + wName
-				: parent.fullPath() + '/' + wName;
+			? '/' + wName
+			: parent.fullPath() + '/' + wName;
 
 		this.file = FileService.getByPath(fullPath, false);
 
