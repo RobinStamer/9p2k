@@ -1,6 +1,6 @@
-const FileService = require('../fs/FileService').FileService;
-const Constants   = require('../protocol/Constants');
-const RMessage    = require('./RMessage').RMessage;
+const Constants       = require('../protocol/Constants');
+const { FileService } = require('../fs/FileService');
+const { RMessage }    = require('./RMessage');
 
 class RRemoveMessage extends RMessage
 {

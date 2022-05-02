@@ -1,6 +1,6 @@
-const Constants      = require('./Constants');
-const TMessage       = require('./TMessage').TMessage;
-const RRemoveMessage = require('./RStatMessage').RRemoveMessage;
+const Constants          = require('./Constants');
+const { TMessage }       = require('./TMessage');
+const { RRemoveMessage } = require('./RRemoveMessage');
 
 class TRemoveMessage extends TMessage
 {

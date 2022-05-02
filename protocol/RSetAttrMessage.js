@@ -1,5 +1,5 @@
+const Constants       = require('./Constants');
 const { FileService } = require('../fs/FileService');
-const { Constants }   = require('./Constants');
 const { RMessage }    = require('./RMessage');
 const { QSession }    = require('../session/QSession');
 
