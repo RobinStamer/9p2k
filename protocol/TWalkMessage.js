@@ -58,3 +58,5 @@ class TWalkMessage extends TMessage
 		return super.response();
 	}
 }
+
+module.exports = { TWalkMessage };

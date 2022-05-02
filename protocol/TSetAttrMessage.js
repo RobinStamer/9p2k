@@ -1,3 +1,4 @@
+const { RSetAttrMessage } = require('./RSetAttrMessage');
 const { TMessage } = require('./TMessage');
 
 class TSetAttrMessage extends TMessage

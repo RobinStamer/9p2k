@@ -1,18 +1,18 @@
-const { Constants }   = require('../protocol/Constants');
-const { NString }     = require('../protocol/NString');
+const Constants           = require('../protocol/Constants');
+const { NString }         = require('../protocol/NString');
 
-const { Qid }         = require('../session/Qid');
-const { QSession }    = require('../session/QSession');
+const { Qid }             = require('../session/Qid');
+const { QSession }        = require('../session/QSession');
 
-const { EventTarget } = require('../events/EventTarget');
-const { Event }       = require('../events/Event');
+const { EventTarget }     = require('../events/EventTarget');
+const { Event }           = require('../events/Event');
 
-const { File }        = require('../fs/File');
-const { FileService } = require('../fs/FileService');
+const { File }            = require('../fs/File');
+const { FileService }     = require('../fs/FileService');
 
-const { Message }     = require('./Message');
-const { RMessage }    = require('./RMessage');
-const { TMessage }    = require('./TMessage');
+const { Message }         = require('./Message');
+const { RMessage }        = require('./RMessage');
+const { TMessage }        = require('./TMessage');
 
 const { RErrorMessage }   = require('./RErrorMessage');
 
@@ -37,40 +37,8 @@ const { TGetAttrMessage } = require('./TGetAttrMessage');
 const { RSetAttrMessage } = require('./RSetAttrMessage');
 const { TSetAttrMessage } = require('./TSetAttrMessage');
 
-class RWalkMessage extends RMessage
-{
-	static encode(message)
-	{
-		if(!message.file)
-		{
-			return RErrorMessage.encode(message);
-		}
-
-		const instance = new this.prototype.constructor;
-		const qid = QSession.getQid(message.file);
-
-		const bytes   = [
-			0, 0, 0, 0,
-			Constants.R_WALK,
-			... new Uint8Array(new Uint16Array([message.tag]).buffer),
-			... new Uint8Array(new Uint16Array([(message.walks ? 1 : 0)]).buffer),
-			... (message.walks ? qid : [])
-		];
-
-		Object.assign(bytes, new Uint8Array(new Uint16Array([bytes.length]).buffer));
-
-		instance.size = bytes.length;
-		instance.blob = Buffer.from(new Uint8Array(bytes));
-
-		instance.type = Constants.R_WALK;
-		instance.TYPE = 'R_WALK';
-		instance.tag  = message.tag;
-
-		return instance;
-	}
-}
-
-const { TWalkMessage } = require('./TWalkMessage');
+const { RWalkMessage }    = require('./RWalkMessage');
+const { TWalkMessage }    = require('./TWalkMessage');
 
 class RlOpenMessage extends RMessage
 {
