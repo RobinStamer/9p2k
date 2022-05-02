@@ -25,12 +25,20 @@ iNotify.stdout.on('data', data => {
 	const [action, path] = data.toString().trim().split(' ');
 	const dayDirectories = GroupDirectory.getMapping(path);
 
-	dayDirectories && dayDirectories.forEach(d => {
-		if(d.parent && d.parent.refreshContent)
-		{
-			d.parent.refreshContent();
-		}
-	});
+	if(dayDirectories)
+	{
+		dayDirectories.forEach(d => {
+			if(d.parent && d.parent.refreshContent)
+			{
+				d.parent.refreshContent();
+			}
+		});
+	}
+	else
+	{
+		output.refreshContent();
+		input.refreshContent();
+	}
 });
 
 const args = [() => console.log(`\nListening!`)];

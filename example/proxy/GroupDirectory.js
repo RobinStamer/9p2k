@@ -53,6 +53,11 @@ class GroupDirectory extends Directory
 		{
 			let mirrorPath = this.realPath + '/' + mirrorName;
 
+			if(!fs.existsSync(mirrorPath))
+			{
+				continue;
+			}
+
 			if(fs.existsSync(mirrorPath + '/Camera'))
 			{
 				mirrorPath += '/Camera';
@@ -168,13 +173,21 @@ class GroupDirectory extends Directory
 
 				group.items.forEach(({source, path}) => {
 					const name = source + '-' + path.replace(/.+\//, '');
-					const stat = fs.lstatSync(path);
+
 					const file = FileService.getByPath(groupDirectory.fullPath(name), ProxyFile, {
 						parent:     groupDirectory
 						, realPath: path
 						, exists:   true
 						, name
 					});
+
+					if(!fs.existsSync(path))
+					{
+						file.exists = false;
+						return;
+					}
+
+					const stat = fs.lstatSync(path);
 
 					file.size  = stat.size;
 

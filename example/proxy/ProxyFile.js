@@ -12,10 +12,17 @@ class ProxyFile extends File
 
 		this.realPath = props.realPath;
 
-		const stat = fs.lstatSync(this.realPath);
+		if(fs.existsSync(this.realPath))
+		{
+			const stat = fs.lstatSync(this.realPath);
 
-		this.mTime = Date.parse(stat.mtime)/1000;
-		this.aTime = Date.parse(stat.atime)/1000;
+			this.mTime = Date.parse(stat.mtime)/1000;
+			this.aTime = Date.parse(stat.atime)/1000;
+		}
+		else
+		{
+			this.exists = false;
+		}
 	}
 
 	getContent(offset = 0, length = undefined)

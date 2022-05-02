@@ -1,6 +1,6 @@
 {
   "name": "ninep2k",
-  "version": "0.0.0-i",
+  "version": "0.0.0-j",
   "description": "9P2000 server for Node JS.",
   "main": "index.js",
   "author": "Sean Morris",
