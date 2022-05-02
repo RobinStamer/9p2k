@@ -1,93 +1,41 @@
-const Constants   = require('../protocol/Constants');
-const NString     = require('../protocol/NString').NString;
+const { Constants }   = require('../protocol/Constants');
+const { NString }     = require('../protocol/NString');
 
-const Qid         = require('../session/Qid').Qid;
-const QSession    = require('../session/QSession').QSession;
+const { Qid }         = require('../session/Qid');
+const { QSession }    = require('../session/QSession');
 
-const EventTarget = require('../events/EventTarget').EventTarget;
-const Event       = require('../events/Event').Event;
+const { EventTarget } = require('../events/EventTarget');
+const { Event }       = require('../events/Event');
 
-const File        = require('../fs/File').File;
-const FileService = require('../fs/FileService').FileService;
+const { File }        = require('../fs/File');
+const { FileService } = require('../fs/FileService');
 
-const Message    = require('./Message').Message;
-const RMessage   = require('./RMessage').RMessage;
-const TMessage   = require('./TMessage').TMessage;
+const { Message }     = require('./Message');
+const { RMessage }    = require('./RMessage');
+const { TMessage }    = require('./TMessage');
 
-const RVersionMessage = require('./RVersionMessage').RVersionMessage;
-const TVersionMessage = require('./TVersionMessage').TVersionMessage;
+const { RErrorMessage }   = require('./RErrorMessage');
 
-const RErrorMessage   = require('./RErrorMessage').RErrorMessage;
+const { RVersionMessage } = require('./RVersionMessage');
+const { TVersionMessage } = require('./TVersionMessage');
 
-const TAttachMessage  = require('./TAttachMessage').TAttachMessage;
-const RAttachMessage  = require('./RAttachMessage').RAttachMessage;
+const { TAttachMessage }  = require('./TAttachMessage');
+const { RAttachMessage }  = require('./RAttachMessage');
 
-const TStatMessage    = require('./TStatMessage').TStatMessage;
-const RStatMessage    = require('./RStatMessage').RStatMessage;
+const { TStatMessage }    = require('./TStatMessage');
+const { RStatMessage }    = require('./RStatMessage');
 
-const TWStatMessage   = require('./TWStatMessage').TWStatMessage;
-const RWStatMessage   = require('./RWStatMessage').RWStatMessage;
+const { TWStatMessage }   = require('./TWStatMessage');
+const { RWStatMessage }   = require('./RWStatMessage');
 
-const TRemoveMessage  = require('./TRemoveMessage').TRemoveMessage;
-const RRemoveMessage  = require('./RRemoveMessage').RRemoveMessage;
+const { TRemoveMessage }  = require('./TRemoveMessage');
+const { RRemoveMessage }  = require('./RRemoveMessage');
 
-const RGetAttrMessage = require('./RGetAttrMessage').RGetAttrMessage;
-const TGetAttrMessage = require('./TGetAttrMessage').TGetAttrMessage;
+const { RGetAttrMessage } = require('./RGetAttrMessage');
+const { TGetAttrMessage } = require('./TGetAttrMessage');
 
-class RSetAttrMessage extends RMessage
-{
-	static encode(message)
-	{
-		const instance = new this.prototype.constructor;
-		const file = FileService.getByFid(message.fid);
-
-		const qid  = QSession.getQid(file);
-
-		file.aTime = 0;
-		file.size  = file.directory ? 0 : 10;
-
-		const bytes   = [
-			0, 0, 0, 0,
-			Constants.R_SETATTR,
-			... new Uint8Array(new Uint16Array([message.tag]).buffer),
-		];
-
-		Object.assign(bytes, new Uint8Array(new Uint16Array([bytes.length]).buffer));
-
-		instance.size = bytes.length;
-		instance.blob = Buffer.from(new Uint8Array(bytes));
-
-		instance.type = Constants.R_GETATTR;
-		instance.TYPE = 'R_GETATTR';
-		instance.tag  = message.tag;
-
-		return instance;
-	}
-}
-
-class TSetAttrMessage extends TMessage
-{
-	static responseType = RSetAttrMessage;
-
-	static parse(blob)
-	{
-		const instance  = super.parse(blob);
- 		const dataView  = instance.view;
-
-		instance.fid    = dataView.getUint32(7, true);
-		instance.valid  = dataView.getUint32(11, true);
-		instance.mode   = dataView.getUint32(15, true);
-		instance.uid    = dataView.getUint32(19, true);
-		instance.gid    = dataView.getUint32(23, true);
-		instance.size   = dataView.getBigInt64(27, true);
-		instance.aTime  = dataView.getBigInt64(31, true);
-		instance.aTimeN = dataView.getBigInt64(33, true);
-		instance.mTime  = dataView.getBigInt64(31, true);
-		instance.mTimeN = dataView.getBigInt64(33, true);
-
-		return instance;
-	}
-}
+const { RSetAttrMessage } = require('./RSetAttrMessage');
+const { TSetAttrMessage } = require('./TSetAttrMessage');
 
 class RWalkMessage extends RMessage
 {
@@ -122,60 +70,7 @@ class RWalkMessage extends RMessage
 	}
 }
 
-class TWalkMessage extends TMessage
-{
-	static responseType = RWalkMessage;
-
-	static parse(blob)
-	{
-		const instance  = super.parse(blob);
-		const dataView  = instance.view;
-
-		instance.fid    = dataView.getUint32(7, true);
-		instance.newFid = dataView.getUint32(11, true);
-		instance.walks  = dataView.getUint16(15, true);
-
-		if(instance.walks)
-		{
-			instance.wName = String( NString.decode(blob, 17) );
-		}
-
-		return instance;
-	}
-
-	response()
-	{
-		if(String(this.wName).match(/^\.+\/*$/) || String(this.wName).match(/\//))
-		{
-			return RErrorMessage.encode(tMessage);
-		}
-
-		const parent = this.file = FileService.getByFid(this.fid);
-		const wName  = this.wName ?? '';
-
-		if(!this.walks)
-		{
-			if(this.file)
-			{
-				FileService.assignFid(this.newFid, this.file);
-			}
-
-			return RWalkMessage.encode(this);
-		}
-
-		process.stderr.write(`\u001b[34m WALK: ${this.tag} ${this.fid} ${parent.fullPath()} ${wName}\u001b[39m\n`);
-
-		const fullPath = parent.path === '/'
-			? '/' + wName
-			: parent.fullPath() + '/' + wName;
-
-		this.file = FileService.getByPath(fullPath, false);
-
-		FileService.assignFid(this.newFid, this.file);
-
-		return super.response();
-	}
-}
+const { TWalkMessage } = require('./TWalkMessage');
 
 class RlOpenMessage extends RMessage
 {

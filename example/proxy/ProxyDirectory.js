@@ -20,56 +20,52 @@ class ProxyDirectory extends Directory
 
 	getChildren()
 	{
-		if(this.populated && Date.now() - this.populated > 5000)
+		if(!this.populated || Date.now() - this.populated > 5000)
 		{
-			this.populated = false;
-		}
-
-		if(!this.populated)
-		{
-			if(!fs.existsSync(this.realPath))
-			{
-				this.exists = false;
-				return [];
-			}
-
-			const files = fs.readdirSync(this.realPath);
-
-			files.forEach(name => {
-				const realPath = this.realPath + '/' + name;
-				const stat  = fs.lstatSync(realPath);
-
-				const props = {
-					size:    stat.size,
-					parent:  this,
-					exists:  true,
-					content: name,
-					realPath,
-					name,
-				};
-
-				if(stat.isDirectory())
-				{
-					const file = FileService.getByPath(this.fullPath(name), ProxyDirectory, props);
-
-					this.children.add(file);
-
-					return;
-				}
-
-				const file = FileService.getByPath(this.fullPath(name), ProxyFile, props);
-
-				this.children.add(file);
-			});
-
-			if(files.length)
-			{
-			}
+			this.refreshContent();
 
 			this.populated = Date.now();
 		}
 
 		return [...this.children];
+	}
+
+	refreshContent()
+	{
+		if(!fs.existsSync(this.realPath))
+		{
+			this.exists = false;
+			return [];
+		}
+
+		const files = fs.readdirSync(this.realPath);
+
+		files.forEach(name => {
+			const realPath = this.realPath + '/' + name;
+			const stat  = fs.lstatSync(realPath);
+
+			const props = {
+				size:    stat.size,
+				parent:  this,
+				exists:  true,
+				content: name,
+				realPath,
+				name,
+			};
+
+			if(stat.isDirectory())
+			{
+				const file = FileService.getByPath(this.fullPath(name), ProxyDirectory, props);
+
+				this.children.add(file);
+
+				return;
+			}
+
+			const file = FileService.getByPath(this.fullPath(name), ProxyFile, props);
+
+			this.children.add(file);
+		});
 	}
 
 	newFile(name, exists = true)
