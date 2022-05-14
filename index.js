@@ -1,29 +1,55 @@
 #!/usr/bin/env node
-
-const MessageService = require('./protocol/MessageService').MessageService;
-
-const FileService = require('./fs/FileService').FileService
-const Directory   = require('./fs/Directory').Directory
-const Server      = require('./net/Server').Server;
-
-const ProxyDirectory = require('./example/proxy/ProxyDirectory').ProxyDirectory;
-const GroupDirectory = require('./example/proxy/GroupDirectory').GroupDirectory;
-// const TimeDirectory = require('./example/clocks/TimeDirectory').TimeDirectory;
+const { ProxyDirectory } = require('./example/proxy/ProxyDirectory');
+const { GroupDirectory } = require('./example/proxy/GroupDirectory');
+const { MessageService } = require('./protocol/MessageService');
+const { FileService }    = require('./fs/FileService');
+const { Directory }      = require('./fs/Directory');
+const { Server }         = require('./net/Server');
+const { spawn }          = require('child_process');
 
 const [bin, script, sourceDir, address, port] = process.argv;
 
 const root   = FileService.getByPath('/', Directory, {exists: true});
-const input  = FileService.getByPath('/input', ProxyDirectory, {name: 'input', exists: true, realPath: sourceDir, parent:root});
+const input  = FileService.getByPath('/input',  ProxyDirectory, {name: 'input',  exists: true, realPath: sourceDir, parent:root});
 const output = FileService.getByPath('/output', GroupDirectory, {name: 'output', exists: true, realPath: sourceDir, parent:root});
 
 root.addChildren(input, output);
 
+const iNotify = spawn('inotifywait', [
+	'--format', '%e %w%f'
+	, '-mre',   'moved_to,moved_from,create,delete'
+	, './cam/cam/'
+]);
+
+iNotify.stdout.on('data', data => {
+	const [action, path] = data.toString().trim().split(' ');
+	const dayDirectories = GroupDirectory.getMapping(path);
+
+	if(dayDirectories)
+	{
+		dayDirectories.forEach(d => {
+			if(d.parent && d.parent.refreshContent)
+			{
+				d.parent.refreshContent();
+			}
+		});
+	}
+	else
+	{
+		output.refreshContent();
+		input.refreshContent();
+	}
+});
+
+const args = [() => console.log(`\nListening!`)];
+
 if(address && address[0] === '/')
 {
-	Server.listen(address, () => console.log(`\nListening!`));
+	args.unshift(address);
 }
 else
 {
-	Server.listen(port ?? 564, address ?? '0.0.0.0', () => console.log(`\nListening!`));
+	args.unshift(port ?? 564, address ?? '0.0.0.0');
 }
 
+Server.listen(...args);

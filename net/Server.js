@@ -6,22 +6,13 @@ const net = require('net');
 const rDial = /^(tcp![^!]+![0-9]+|unix![^!]+)$/;
 
 const server = net.createServer(c => {
-
 	c.on('end', () => console.log('server disconnected!'));
-
-	c.on('data', blob => {
-
-		const messages = MessageService.parse(blob);
-
-		for(const message of messages)
+	c.on('data', blob => MessageService.parse(blob).forEach(message => {
+		if(message.response)
 		{
-			if(message.response)
-			{
-				c.write(message.response().blob);
-			}
+			c.write(message.response().blob);
 		}
-
-	});
+	}));
 });
 
 server.listen = (listen => {
