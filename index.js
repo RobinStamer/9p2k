@@ -18,10 +18,13 @@ root.addChildren(input, output);
 const iNotify = spawn('inotifywait', [
 	'--format', '%e %w%f'
 	, '-mre',   'moved_to,moved_from,create,delete'
-	, './cam/cam/'
+	, sourceDir
 ]);
 
+iNotify.stderr.pipe(process.stderr);
+
 iNotify.stdout.on('data', data => {
+
 	const [action, path] = data.toString().trim().split(' ');
 	const dayDirectories = GroupDirectory.getMapping(path);
 
