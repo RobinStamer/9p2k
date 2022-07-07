@@ -5,8 +5,8 @@ class File
 	name    = '';
 	size    = 0;
 	mode    = 0o755;
-	uid     = 1000;
-	gid     = 1000;
+	uid     = 10000;
+	gid     = 10000;
 	parent  = null;
 	exists  = true;
 	content = undefined;
@@ -52,14 +52,23 @@ class File
 
 	setContent(content)
 	{
-		return this.content = Buffer.from(content, 'utf-8');
+		this.content = Buffer.from(content, 'utf-8')
+
+		this.size = this.content.length
+
+		return this.content
 	}
 
-	getContent()
+	getContent(offset, length)
 	{
+		if (offset > 0) {
+			return ''
+		}
+		return this.content ? this.content : Buffer.from(`${this.fullPath()}\n`)
+		/*
 		return this.content
-			? this.content.slice(offset, Number(offset) + Number(length))
-			: Buffer.from(this.path + "\n");
+			? this.content.slice(BigInt.asIntN(32, offset), BigInt.asIntN(32, BigInt(offset) + BigInt(length)))
+			: Buffer.from(this.path + "\n"); //*/
 	}
 }
 
