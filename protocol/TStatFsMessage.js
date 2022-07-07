@@ -8,9 +8,8 @@ class TStatFsMessage extends TMessage
 	static parse(blob)
 	{
 		const instance  = super.parse(blob);
-		const dataView  = instance.view;
 
-		instance.fid    = dataView.getUint32(7, true);
+		instance.fid    = instance.u32(7)
 
 		return instance;
 	}

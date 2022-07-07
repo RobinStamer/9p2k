@@ -1,21 +1,18 @@
 const Constants   = require('../protocol/Constants');
 
-class Message
-{
+class Message {
 	blob;
 	size;
 	TYPE;
 	type;
 
-	static parse(blob)
-	{
+	static parse(blob) {
 		const instance = new this.prototype.constructor;
-		const dataView = new DataView(new Uint8Array([...blob]).buffer);
+		
+		instance.blob = blob;
 
-		instance.view  = dataView;
-
-		instance.size  = dataView.getUint32(0, true);
-		instance.type  = dataView.getUint8(4, true);
+		instance.size  = instance.u32(0)
+		instance.type  = instance.u8(4)
 
 		for(const packetType in Constants)
 		{
@@ -25,8 +22,6 @@ class Message
 			}
 		}
 
-		instance.blob = blob;
-
 		return instance;
 	}
 
@@ -35,6 +30,22 @@ class Message
 	toString()
 	{
 		return this.blob.toString();
+	}
+
+	u8(i) {
+		return this.blob.readUint8(i || 0)
+	}
+
+	u16(i) {
+		return this.blob.readUint16LE(i || 0)
+	}
+
+	u32(i) {
+		return this.blob.readUint32LE(i || 0)
+	}
+
+	i64(i) {
+		return this.blob.readBigInt64LE(i || 0)
 	}
 }
 

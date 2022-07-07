@@ -8,18 +8,17 @@ class TSetAttrMessage extends TMessage
 	static parse(blob)
 	{
 		const instance  = super.parse(blob);
- 		const dataView  = instance.view;
 
-		instance.fid    = dataView.getUint32(7, true);
-		instance.valid  = dataView.getUint32(11, true);
-		instance.mode   = dataView.getUint32(15, true);
-		instance.uid    = dataView.getUint32(19, true);
-		instance.gid    = dataView.getUint32(23, true);
-		instance.size   = dataView.getBigInt64(27, true);
-		instance.aTime  = dataView.getBigInt64(31, true);
-		instance.aTimeN = dataView.getBigInt64(33, true);
-		instance.mTime  = dataView.getBigInt64(31, true);
-		instance.mTimeN = dataView.getBigInt64(33, true);
+		instance.fid    = instance.u32(7)
+		instance.valid  = instance.u32(11)
+		instance.mode   = instance.u32(15)
+		instance.uid    = instance.u32(19)
+		instance.gid    = instance.u32(23)
+		instance.size   = instance.i64(27)
+		instance.aTime  = instance.i64(31)
+		instance.aTimeN = instance.i64(33)
+		instance.mTime  = instance.i64(31)
+		instance.mTimeN = instance.i64(33)
 
 		return instance;
 	}

@@ -7,9 +7,8 @@ class RMessage extends Message
 	static parse(blob)
 	{
 		const instance = super.parse(blob);
-		const dataView = instance.view;
 
-		instance.tag   = dataView.getUint16(5, true);
+		instance.tag   = instance.u16(5)
 
 		return instance;
 	}

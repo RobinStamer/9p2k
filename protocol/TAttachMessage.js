@@ -14,10 +14,9 @@ class TAttachMessage extends TMessage
 	static parse(blob)
 	{
 		const instance = super.parse(blob);
-		const dataView = instance.view;
 
-		instance.fid   = dataView.getUint32(7, true);
-		instance.afid  = dataView.getUint32(11, true);
+		instance.fid   = instance.u32(7)
+		instance.afid  = instance.u32(11)
 
 		instance.uName = String( NString.decode(blob, 15) );
 		instance.aName = String( NString.decode(blob, 17 + instance.uName.length) );

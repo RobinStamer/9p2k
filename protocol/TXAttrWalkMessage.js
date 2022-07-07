@@ -8,10 +8,9 @@ class TXAttrWalkMessage extends TMessage
 	static parse(blob)
 	{
 		const instance  = super.parse(blob);
-		const dataView  = instance.view;
 
-		instance.fid    = dataView.getUint32(7, true);
-		instance.newFid = dataView.getUint32(11, true);
+		instance.fid    = instance.u32(7)
+		instance.newFid = instance.u32(11)
 		instance.wName  = String( NString.decode(blob, 15) );
 
 		return instance;

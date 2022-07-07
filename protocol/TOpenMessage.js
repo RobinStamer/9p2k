@@ -8,10 +8,9 @@ class TOpenMessage extends TMessage
 	static parse(blob)
 	{
 		const instance  = super.parse(blob);
-		const dataView  = instance.view;
 
-		instance.fid    = dataView.getUint32(7, true);
-		instance.mode   = dataView.getUint8(11, true);
+		instance.fid    = instance.u32(7)
+		instance.mode   = instance.u8(11)
 
 		return instance;
 	}

@@ -11,11 +11,10 @@ class TWalkMessage extends TMessage
 	static parse(blob)
 	{
 		const instance  = super.parse(blob);
-		const dataView  = instance.view;
 
-		instance.fid    = dataView.getUint32(7, true);
-		instance.newFid = dataView.getUint32(11, true);
-		instance.walks  = dataView.getUint16(15, true);
+		instance.fid    = instance.u32(7)
+		instance.newFid = instance.u32(11)
+		instance.walks  = instance.u16(15)
 
 		if(instance.walks)
 		{

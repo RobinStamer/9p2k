@@ -1,3 +1,5 @@
+const { FileService } = require('../fs/FileService')
+const Constants = require('../protocol/Constants')
 const { RMessage } = require('./RMessage');
 
 class RWriteMessage extends RMessage
@@ -6,7 +8,7 @@ class RWriteMessage extends RMessage
 	{
 		const file = FileService.getByFid(tMessage.fid);
 
-		process.stderr.write(`\u001b[35mWRITE: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m `);
+		process.stderr.write(`\u001b[35mWRITE: ${tMessage.tag} ${tMessage.fid} ${file.path}\u001b[39m \n`);
 
 		const bytes = [
 			0, 0, 0, 0,

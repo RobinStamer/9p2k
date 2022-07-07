@@ -58,10 +58,7 @@ class MessageService
 
 		while(index < blob.length)
 		{
-			const slice    = new Uint8Array(blob.slice(index));
-
-			const dataView = new DataView(slice.buffer);
-			const length   = dataView.getUint32(0, true);
+			const length   = instance.u32(0)
 			const current  = blob.slice(index, index + length);
 
 			index += length;

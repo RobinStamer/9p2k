@@ -33,7 +33,7 @@ class RStatMessage extends RMessage
 				... new Uint8Array(new Uint32Array([file.mTime ?? Math.trunc(0)]).buffer),                 // mtime
 				... new Uint8Array(new BigUint64Array([BigInt(file.size ?? 0)]).buffer),     // length
 				... NString.encode(file.root ? '/' : file.name),    // Name
-				... NString.encode('1000'),                         // uid
+				... NString.encode('root'),                         // uid
 				... NString.encode('1000'),                         // gid
 				... NString.encode('1000'),                         // muid
 			];

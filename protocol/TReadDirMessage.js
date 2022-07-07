@@ -8,11 +8,10 @@ class TReadDirMessage extends TMessage
 	static parse(blob)
 	{
 		const instance  = super.parse(blob);
-		const dataView  = instance.view;
 
-		instance.fid    = dataView.getUint32(7, true);
-		instance.offset = dataView.getBigInt64(9, true);
-		instance.count  = dataView.getUint32(13, true);
+		instance.fid    = instance.u32(7)
+		instance.offset = instance.i64(9)
+		instance.count  = instance.u32(13)
 
 		return instance;
 	}

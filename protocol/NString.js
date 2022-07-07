@@ -1,10 +1,8 @@
-class NString
-{
+class NString {
 	length = 0;
 	value  = '';
 
-	static decode(bytes, offset = 0)
-	{
+	static decode(bytes, offset = 0) {
 		const instance = new this.prototype.constructor;
 		const dataView = new DataView(new Uint8Array(bytes).buffer);
 

@@ -11,7 +11,6 @@ class TVersionMessage extends TMessage
 	static parse(blob)
 	{
 		const instance = super.parse(blob);
-		const dataView = instance.view;
 
 		instance.version = String( NString.decode(blob, 11) );
 
