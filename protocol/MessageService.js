@@ -58,7 +58,7 @@ class MessageService
 
 		while(index < blob.length)
 		{
-			const length   = instance.u32(0)
+			const length   = blob.readUint32LE(0) // instance.u32(0)
 			const current  = blob.slice(index, index + length);
 
 			index += length;
